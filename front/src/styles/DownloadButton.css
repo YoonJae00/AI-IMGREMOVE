@@ -1,0 +1,22 @@
+.DownloadButton {
+    display: block;
+    width: 300px;
+    margin: 30px auto;
+    padding: 15px 30px;
+    background-color: #0077be;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .DownloadButton:hover {
+    background-color: #005f9e;
+  }
+  
+  .DownloadButton:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
