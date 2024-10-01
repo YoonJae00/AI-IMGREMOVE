@@ -217,10 +217,25 @@ async function processImage(file, promptData) {
       processedPath: downloadedImagePath
     };
   } catch (error) {
-    console.error(`이미지 ${file.originalname} 처리 중 오��:`, error);
+    console.error(`이미지 ${file.originalname} 처리 중 오:`, error);
     throw error;
   }
 }
+
+async function logAccess(req) {
+  const timestamp = new Date().toISOString();
+  const ip = req.ip;
+  const logEntry = `${timestamp},${ip}\n`;
+  
+  const logPath = path.join(__dirname, 'access.log');
+  await fsPromises.appendFile(logPath, logEntry);
+}
+
+// Express 미들웨어로 사용
+app.use(async (req, res, next) => {
+  await logAccess(req);
+  next();
+});
 
 app.post('/uploads', upload.array('photos', 10), async (req, res) => {
   try {
@@ -274,8 +289,39 @@ app.post('/uploads', upload.array('photos', 10), async (req, res) => {
   }
 });
 
+app.get('/stats', async (req, res) => {
+  const logPath = path.join(__dirname, 'access.log');
+  try {
+    const logContent = await fsPromises.readFile(logPath, 'utf-8');
+    const lines = logContent.split('\n').filter(line => line.trim() !== '');
+    
+    const stats = {
+      totalAccesses: lines.length,
+      accessesByHour: {},
+      uniqueIPs: new Set()
+    };
+    
+    lines.forEach(line => {
+      const [timestamp, ip] = line.split(',');
+      const hour = new Date(timestamp).getHours();
+      stats.accessesByHour[hour] = (stats.accessesByHour[hour] || 0) + 1;
+      stats.uniqueIPs.add(ip);
+    });
+    
+    stats.uniqueVisitors = stats.uniqueIPs.size;
+    delete stats.uniqueIPs;
+    
+    res.json(stats);
+  } catch (error) {
+    console.error('로그 파일 읽기 오류:', error);
+    res.status(500).send('통계 데이터를 가져오는 중 오류가 발생했습니다.');
+  }
+});
+
 app.listen(port, () => {
   console.log(`서버가 http://localhost:${port} 에서 실행 중입니다.`);
 });
 
 app.set('trust proxy', 1);
+
+app.use(express.static('public'));  // 'public'은 정적 파일이 있는 폴더 이름입니다.
