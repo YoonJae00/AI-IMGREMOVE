@@ -10,22 +10,45 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
-const port = 3000;
+const port = 3101;  // 포트를 3101로 설정
+
+const tempDir = path.join(__dirname, 'temp');
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir);
+}
 
 // CORS 미들웨어 추가
 app.use(cors());
 
+app.use(express.json());
+
+// 무제한 IP 목록 정의
+const unlimitedIPs = ['127.0.0.1', '::1', '124.49.147.145']; // 새 IP 주소 추가 // localhost IP 추가
+
+// IP 주소 확인 함수
+function getClientIp(req) {
+  return req.headers['x-forwarded-for'] || 
+         req.connection.remoteAddress || 
+         req.socket.remoteAddress ||
+         req.connection.socket.remoteAddress;
+}
+
 // Rate limiter 설정
 const limiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 시간
-  max: 10, // IP 당 10번의 요청 허용
+  max: (req) => {
+    const clientIp = getClientIp(req);
+    return unlimitedIPs.includes(clientIp) ? 1000000 : 10; // 무제한 IP는 높은 제한, 그 외는 10회
+  },
   message: '일일 요청 한도를 초과했습니다. 내일 다시 시도해 주세요.',
-  standardHeaders: true, // `RateLimit-*` 헤더를 반환합니다
-  legacyHeaders: false, // `X-RateLimit-*` 헤더를 비활성화합니다
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // 모든 요청에 rate limiter 적용
 app.use(limiter);
+
+
 
 // Multer 설정 (메모리 스토리지 사용)
 const upload = multer({
@@ -38,7 +61,7 @@ async function uploadImage(file) {
   formData.append('image', file.buffer, file.originalname);
 
   try {
-    const response = await axios.post('http://221.148.97.237:8188/upload/image', formData, {
+    const response = await axios.post('http://192.168.0.119:8188/upload/image', formData, {
       headers: {
         ...formData.getHeaders()
       }
@@ -57,7 +80,7 @@ async function waitForImageUpload(filename) {
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      const response = await axios.get(`http://221.148.97.237:8188/view`, {
+      const response = await axios.get(`http://192.168.0.119:8188/view`, {
         params: {
           filename: filename,
           type: 'input'
@@ -81,7 +104,7 @@ async function waitForImageUpload(filename) {
 
 async function sendPrompt(workflow) {
   try {
-    const response = await axios.post('http://221.148.97.237:8188/prompt', { prompt: workflow });
+    const response = await axios.post('http://192.168.0.119:8188/prompt', { prompt: workflow });
     return response.data;
   } catch (error) {
     console.error('프롬프트 전송 중 오류:', error);
@@ -95,7 +118,7 @@ async function waitForImage(promptId) {
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      const response = await axios.get(`http://221.148.97.237:8188/history/${promptId}`);
+      const response = await axios.get(`http://192.168.0.119:8188/history/${promptId}`);
       const history = response.data;
       
       console.log(`Attempt ${attempt + 1}: Received history:`, JSON.stringify(history, null, 2));
@@ -145,27 +168,36 @@ async function waitForImage(promptId) {
   throw new Error('이미지 생성 타임아웃');
 }
 
-async function downloadAndRenameImage(url, originalFilename) {
-  const response = await axios.get(url, { responseType: 'arraybuffer' });
-  const outputPath = path.join(__dirname, 'temp', originalFilename);
-  await fsPromises.writeFile(outputPath, response.data);
-  return outputPath;
+async function downloadAndRenameImage(url, originalName) {
+  try {
+    const response = await axios.get(url, { responseType: 'arraybuffer' });
+    const buffer = Buffer.from(response.data, 'binary');
+    const newFileName = `processed_${originalName}`;
+    const filePath = path.join(tempDir, newFileName);
+    await fsPromises.writeFile(filePath, buffer);
+    console.log(`이미지 저장 완료: ${filePath}`);
+    return filePath;
+  } catch (error) {
+    console.error('이미지 다운로드 및 저장 중 오류:', error);
+    throw error;
+  }
 }
 
 async function createZipArchive(files, outputPath) {
   return new Promise((resolve, reject) => {
-    const output = fs.createWriteStream(outputPath);
     const archive = archiver('zip', {
       zlib: { level: 9 }
     });
 
+    const output = fs.createWriteStream(outputPath);
+
     output.on('close', () => {
-      console.log(archive.pointer() + ' total bytes');
-      console.log('ZIP 아카이브 생성 완료');
+      console.log('ZIP 파일 생성 완료');
       resolve();
     });
 
     archive.on('error', (err) => {
+      console.error('ZIP 파일 생성 중 오류:', err);
       reject(err);
     });
 
@@ -209,7 +241,7 @@ async function processImage(file, promptData) {
     // 이미지 생성 대기
     const imageFilename = await waitForImage(promptResponse.prompt_id);
 
-    const imageUrl = `http://221.148.97.237:8188/view?filename=${imageFilename}`;
+    const imageUrl = `http://192.168.0.119:8188/view?filename=${imageFilename}`;
     const downloadedImagePath = await downloadAndRenameImage(imageUrl, file.originalname);
 
     return {
@@ -298,17 +330,56 @@ app.get('/stats', async (req, res) => {
     const stats = {
       totalAccesses: lines.length,
       accessesByHour: {},
-      uniqueIPs: new Set()
+      accessesByDay: {},
+      accessesByMonth: {},
+      uniqueIPs: new Set(),
+      mostActiveHour: '',
+      averageDailyAccesses: 0,
+      ipAccessCounts: {}
     };
     
+    const now = new Date();
+    let totalDays = 0;
+    
     lines.forEach(line => {
+    
       const [timestamp, ip] = line.split(',');
-      const hour = new Date(timestamp).getHours();
+      const date = new Date(timestamp);
+      const hour = date.getHours();
+      const day = date.toISOString().split('T')[0];
+      const month = date.toISOString().slice(0, 7);
+
       stats.accessesByHour[hour] = (stats.accessesByHour[hour] || 0) + 1;
+      stats.accessesByDay[day] = (stats.accessesByDay[day] || 0) + 1;
+      stats.accessesByMonth[month] = (stats.accessesByMonth[month] || 0) + 1;
       stats.uniqueIPs.add(ip);
+
+      if (date > now - 30 * 24 * 60 * 60 * 1000) {
+        totalDays++;
+      }
+
+      // IP별 접속 횟수 카운트
+      stats.ipAccessCounts[ip] = (stats.ipAccessCounts[ip] || 0) + 1;
     });
     
     stats.uniqueVisitors = stats.uniqueIPs.size;
+    stats.mostActiveHour = Object.entries(stats.accessesByHour).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+    stats.averageDailyAccesses = totalDays > 0 ? Math.round(lines.length / totalDays) : 0;
+    
+    // 가장 많이 접속한 IP 찾기
+    const mostActiveIP = Object.entries(stats.ipAccessCounts).reduce((a, b) => a[1] > b[1] ? a : b);
+    stats.mostActiveIP = {
+      ip: mostActiveIP[0],
+      count: mostActiveIP[1]
+    };
+
+    // IP 접속 횟수 정보 정렬 (상위 10개만 유지)
+    stats.topIPs = Object.entries(stats.ipAccessCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([ip, count]) => ({ ip, count }));
+
+    delete stats.ipAccessCounts;
     delete stats.uniqueIPs;
     
     res.json(stats);
@@ -318,6 +389,10 @@ app.get('/stats', async (req, res) => {
   }
 });
 
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'stats.html'));
+});
+
 app.listen(port, () => {
   console.log(`서버가 http://localhost:${port} 에서 실행 중입니다.`);
 });
@@ -325,3 +400,26 @@ app.listen(port, () => {
 app.set('trust proxy', 1);
 
 app.use(express.static('public'));  // 'public'은 정적 파일이 있는 폴더 이름입니다.
+
+app.get('/unlimited-ips', (req, res) => {
+  res.json(unlimitedIPs);
+});
+
+app.post('/unlimited-ips', (req, res) => {
+  const { ip } = req.body;
+  if (!unlimitedIPs.includes(ip)) {
+    unlimitedIPs.push(ip);
+    console.log(ip);
+  }
+  res.sendStatus(200);
+});
+
+app.delete('/unlimited-ips', (req, res) => {
+  const { ip } = req.body;
+  const index = unlimitedIPs.indexOf(ip);
+  if (index > -1) {
+    unlimitedIPs.splice(index, 1);
+    console.log(ip);
+  }
+  res.sendStatus(200);
+});

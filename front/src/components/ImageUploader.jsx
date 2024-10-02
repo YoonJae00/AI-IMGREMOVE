@@ -60,11 +60,12 @@ function ImageUploader() {
       });
       formData.append('prompt', JSON.stringify({}));
 
-      const response = await axios.post('http://localhost:3000/uploads', formData, {
+      const response = await axios.post('http://221.148.97.237:3101/uploads', formData, {
         responseType: 'blob',
         headers: {
           'Content-Type': 'multipart/form-data'
-        }
+        },
+        timeout: 300000 // 5분으로 타임아웃 설정
       });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -128,6 +129,7 @@ function ImageUploader() {
               ></div>
             </div>
             <p>처리 중... 남은 시간: {remainingTime}초</p>
+            <p>(접속인원이 많을 경우 처리 시간이 증가할 수 있습니다)</p>
           </div>
         </div>
       )}
