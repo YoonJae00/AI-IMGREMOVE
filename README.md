@@ -233,3 +233,6 @@ PORT=3101
 
 프로젝트 관리자: realyoon77@gmail.com
 
+## 개선사항
+<img src='https://github.com/user-attachments/assets/35f03666-c3fa-4d99-9a9e-1e87f55aa3a2'>
+
