@@ -27,10 +27,19 @@ const unlimitedIPs = ['127.0.0.1', '::1', '124.49.147.145']; // 새 IP 주소 �
 
 // IP 주소 확인 함수
 function getClientIp(req) {
-  return req.headers['x-forwarded-for'] || 
-         req.connection.remoteAddress || 
-         req.socket.remoteAddress ||
-         req.connection.socket.remoteAddress;
+  const forwardedFor = req.headers['x-forwarded-for'];
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
+  let ip = req.connection.remoteAddress || 
+           req.socket.remoteAddress ||
+           req.connection.socket.remoteAddress;
+  
+  // IPv4-mapped IPv6 주소 처리
+  if (ip.substr(0, 7) === "::ffff:") {
+    ip = ip.substr(7);
+  }
+  return ip;
 }
 
 // Rate limiter 설정
@@ -38,7 +47,7 @@ const limiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 시간
   max: (req) => {
     const clientIp = getClientIp(req);
-    return unlimitedIPs.includes(clientIp) ? 1000000 : 10; // 무제한 IP는 높은 제한, 그 외는 10회
+    return unlimitedIPs.some(ip => clientIp.includes(ip)) ? 1000000 : 10; // 무제한 IP는 높은 제한, 그 외는 10회
   },
   message: '일일 요청 한도를 초과했습니다. 내일 다시 시도해 주세요.',
   standardHeaders: true,
@@ -407,19 +416,19 @@ app.get('/unlimited-ips', (req, res) => {
 
 app.post('/unlimited-ips', (req, res) => {
   const { ip } = req.body;
-  if (!unlimitedIPs.includes(ip)) {
+  if (ip && !unlimitedIPs.some(existingIp => ip.includes(existingIp))) {
     unlimitedIPs.push(ip);
-    console.log(ip);
+    console.log('Updated unlimitedIPs:', unlimitedIPs);
   }
   res.sendStatus(200);
 });
 
 app.delete('/unlimited-ips', (req, res) => {
   const { ip } = req.body;
-  const index = unlimitedIPs.indexOf(ip);
+  const index = unlimitedIPs.findIndex(existingIp => ip.includes(existingIp));
   if (index > -1) {
     unlimitedIPs.splice(index, 1);
-    console.log(ip);
+    console.log('Updated unlimitedIPs:', unlimitedIPs);
   }
   res.sendStatus(200);
 });

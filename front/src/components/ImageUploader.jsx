@@ -10,6 +10,11 @@ function ImageUploader() {
   const [estimatedTime, setEstimatedTime] = useState(0);
   const [remainingTime, setRemainingTime] = useState(0);
 
+  const removeAllImages = () => {
+    setPreviews([]);
+    setFiles([]);
+  };
+
   const onDrop = useCallback(async (acceptedFiles) => {
     if (previews.length + acceptedFiles.length > 10) {
       alert('최대 10개의 이미지만 업로드할 수 있습니다.');
@@ -112,6 +117,11 @@ function ImageUploader() {
           </div>
         ))}
       </div>
+      {previews.length > 0 && (
+        <button className="remove-all-button" onClick={removeAllImages}>
+          전체 삭제
+        </button>
+      )}
       <button 
         className="upload-download-button" 
         onClick={uploadAndDownload} 

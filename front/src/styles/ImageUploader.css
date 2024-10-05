@@ -132,3 +132,17 @@
 .loading-spinner {
     display: none;
 }
+
+.remove-all-button {
+    margin-top: 10px;
+    padding: 5px 10px;
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.remove-all-button:hover {
+    background-color: #ff3333;
+}
