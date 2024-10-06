@@ -12,6 +12,8 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const port = 3101;  // 포트를 3101로 설정
 
+const comfyUI = 'http://221.148.97.237:8188';
+
 const tempDir = path.join(__dirname, 'temp');
 if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir);
@@ -70,7 +72,7 @@ async function uploadImage(file) {
   formData.append('image', file.buffer, file.originalname);
 
   try {
-    const response = await axios.post('http://192.168.0.119:8188/upload/image', formData, {
+    const response = await axios.post(`${comfyUI}/upload/image`, formData, {
       headers: {
         ...formData.getHeaders()
       }
@@ -89,7 +91,7 @@ async function waitForImageUpload(filename) {
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      const response = await axios.get(`http://192.168.0.119:8188/view`, {
+      const response = await axios.get(`${comfyUI}:8188/view`, {
         params: {
           filename: filename,
           type: 'input'
@@ -113,7 +115,7 @@ async function waitForImageUpload(filename) {
 
 async function sendPrompt(workflow) {
   try {
-    const response = await axios.post('http://192.168.0.119:8188/prompt', { prompt: workflow });
+    const response = await axios.post(`${comfyUI}:8188/prompt`, { prompt: workflow });
     return response.data;
   } catch (error) {
     console.error('프롬프트 전송 중 오류:', error);
@@ -127,7 +129,7 @@ async function waitForImage(promptId) {
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      const response = await axios.get(`http://192.168.0.119:8188/history/${promptId}`);
+      const response = await axios.get(`${comfyUI}/history/${promptId}`);
       const history = response.data;
       
       console.log(`Attempt ${attempt + 1}: Received history:`, JSON.stringify(history, null, 2));

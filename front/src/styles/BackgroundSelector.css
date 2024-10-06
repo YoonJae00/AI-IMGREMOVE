@@ -1,0 +1,32 @@
+.BackgroundSelector {
+    margin-top: 20px;
+    width: 100%;
+}
+
+.BackgroundSelector h3 {
+    color: #0077be;
+    margin-bottom: 10px;
+}
+
+.background-dropzone {
+    width: 100%;
+    height: 150px;
+    border: 2px dashed #0077be;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    background-color: #f0f8ff;
+}
+
+.background-dropzone:hover {
+    background-color: #e6f3ff;
+}
+
+.background-dropzone p {
+    color: #0077be;
+    font-size: 16px;
+    text-align: center;
+}

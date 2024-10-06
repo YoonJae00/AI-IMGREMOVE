@@ -1,10 +1,23 @@
 .ImageUploader {
-    width: 80%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 800px;
     margin: 0 auto;
 }
 
+.dropzone-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
 .dropzone {
-    height: 400px;
+    width: 40%;
+    height: 200px;
     border: 2px dashed #0077be;
     border-radius: 10px;
     display: flex;
@@ -12,18 +25,24 @@
     align-items: center;
     cursor: pointer;
     transition: background-color 0.3s ease;
-    background-color: #ffffff;
-    margin-bottom: 20px;
+    background-color: #f0f8ff;
 }
 
 .dropzone:hover {
-    background-color: #f0f8ff;
+    background-color: #e6f3ff;
 }
 
 .dropzone p {
     color: #0077be;
-    font-size: 18px;
+    font-size: 14px;
     text-align: center;
+    padding: 10px;
+}
+
+.plus-sign {
+    font-size: 36px;
+    color: #0077be;
+    margin: 0 20px;
 }
 
 .previews {
@@ -31,6 +50,7 @@
     flex-wrap: wrap;
     gap: 10px;
     margin-bottom: 20px;
+    width: 100%;
 }
 
 .preview-container {
@@ -70,13 +90,6 @@
     background-color: #ff3333;
 }
 
-.button-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 20px;
-}
-
 .clear-all-button,
 .upload-download-button {
     padding: 10px 20px;
@@ -85,6 +98,7 @@
     border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.3s;
+    margin-top: 10px;
 }
 
 .clear-all-button {
@@ -109,6 +123,35 @@
     background-color: #cccccc;
     color: #666666;
     cursor: not-allowed;
+}
+
+.combined-preview {
+    margin-top: 20px;
+    width: 100%;
+}
+
+.combined-preview h3 {
+    color: #0077be;
+    margin-bottom: 10px;
+}
+
+.preview-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.preview-row .preview-image {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.preview-row span {
+    font-size: 24px;
+    color: #0077be;
 }
 
 .loading-overlay {
@@ -144,8 +187,4 @@
     height: 100%;
     background-color: #4CAF50;
     transition: width 0.5s ease-in-out;
-}
-
-.loading-spinner {
-    display: none;
 }

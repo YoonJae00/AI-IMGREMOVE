@@ -13,14 +13,17 @@ function DownloadButton({ processedImages }) {
     });
   };
 
+  /*     // <button
+    //   className="DownloadButton"
+    //   onClick={handleDownload}
+    //   disabled={processedImages.length === 0}
+    // >
+    //   다운로드
+    // </button>
+   */
   return (
-    <button 
-      className="DownloadButton" 
-      onClick={handleDownload} 
-      disabled={processedImages.length === 0}
-    >
-      다운로드
-    </button>
+      <>
+        </>
   );
 }
 
