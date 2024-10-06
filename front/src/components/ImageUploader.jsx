@@ -10,11 +10,6 @@ function ImageUploader() {
   const [estimatedTime, setEstimatedTime] = useState(0);
   const [remainingTime, setRemainingTime] = useState(0);
 
-  const removeAllImages = () => {
-    setPreviews([]);
-    setFiles([]);
-  };
-
   const onDrop = useCallback(async (acceptedFiles) => {
     if (previews.length + acceptedFiles.length > 10) {
       alert('최대 10개의 이미지만 업로드할 수 있습니다.');
@@ -34,6 +29,11 @@ function ImageUploader() {
     newPreviews.splice(index, 1);
     setPreviews(newPreviews);
     setFiles(newPreviews.map(preview => preview.file));
+  };
+
+  const clearAllImages = () => {
+    setPreviews([]);
+    setFiles([]);
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
@@ -65,12 +65,11 @@ function ImageUploader() {
       });
       formData.append('prompt', JSON.stringify({}));
 
-      const response = await axios.post('http://221.148.97.237:3101/uploads', formData, {
+      const response = await axios.post('http://localhost:3000/uploads', formData, {
         responseType: 'blob',
         headers: {
           'Content-Type': 'multipart/form-data'
-        },
-        timeout: 300000 // 5분으로 타임아웃 설정
+        }
       });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -118,7 +117,7 @@ function ImageUploader() {
         ))}
       </div>
       {previews.length > 0 && (
-        <button className="remove-all-button" onClick={removeAllImages}>
+        <button className="clear-all-button" onClick={clearAllImages}>
           전체 삭제
         </button>
       )}
@@ -139,7 +138,6 @@ function ImageUploader() {
               ></div>
             </div>
             <p>처리 중... 남은 시간: {remainingTime}초</p>
-            <p>(접속인원이 많을 경우 처리 시간이 증가할 수 있습니다)</p>
           </div>
         </div>
       )}
