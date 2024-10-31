@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import BackgroundSelector from './BackgroundSelector';
-import '../styles/ImageUploader.css';
+
 
 function ImageUploader() {
   const [previews, setPreviews] = useState([]);

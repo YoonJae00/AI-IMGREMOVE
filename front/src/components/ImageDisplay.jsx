@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/ImageDisplay.css';
+
 
 function ImageDisplay({ processedImages }) {
   return (

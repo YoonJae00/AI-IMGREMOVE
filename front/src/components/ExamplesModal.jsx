@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/ExamplesModal.css';
+
 
 function ExamplesModal({ onClose }) {
   return (

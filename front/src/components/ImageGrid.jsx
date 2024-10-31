@@ -1,66 +1,39 @@
-import React, { useState } from 'react';
-import ImageCard from './ImageCard';
-import '../styles/ImageGrid.css';
+import React from 'react';
 
-function ImageGrid({ images = [], onImageSelect }) {
-  const [selectedImages, setSelectedImages] = useState([]);
+function ImageGrid({ previews, onRemove, selectedImages, onSelect }) {
+    return (
+        <div className="image-grid">
+            {previews.map((preview, index) => (
+                <div key={index} className="image-row">
+                    <div className="image-item">
+                        <input 
+                            type="checkbox"
+                            className="image-checkbox"
+                            checked={selectedImages.includes(index)}
+                            onChange={() => onSelect(index)}
+                        />
+                        <img src={preview.preview} alt={`원본 ${index + 1}`} />
+                    </div>
+                    
+                    <div className="progress-section">
+                        <div className="progress-bar">
+                            <div className="progress-fill" style={{ width: '30%' }} />
+                        </div>
+                        <div className="progress-status">
+                            <span>처리 중...</span>
+                            <span>30%</span>
+                        </div>
+                        <button className="retry-button">다시 처리하기</button>
+                    </div>
 
-  const toggleImageSelection = (imageId) => {
-    setSelectedImages(prev => 
-      prev.includes(imageId)
-        ? prev.filter(id => id !== imageId)
-        : [...prev, imageId]
+                    <div className="image-item">
+                        <img src={preview.preview} alt={`결과 ${index + 1}`} />
+                        <button className="remove-button" onClick={() => onRemove(index)}>×</button>
+                    </div>
+                </div>
+            ))}
+        </div>
     );
-  };
-
-  const handleSelectAll = () => {
-    if (selectedImages.length === images.length) {
-      setSelectedImages([]);
-    } else {
-      setSelectedImages(images.map(img => img.id));
-    }
-  };
-
-  const handleClearSelection = () => {
-    setSelectedImages([]);
-  };
-
-  return (
-    <div className="image-grid">
-      <div className="grid-header">
-        <div className="grid-stats">
-          <span className="total-images">총 {images.length}장</span>
-          <span className="selected-images">선택됨 {selectedImages.length}장</span>
-        </div>
-        <div className="grid-actions">
-          <button 
-            className="select-all"
-            onClick={handleSelectAll}
-          >
-            {selectedImages.length === images.length ? '선택해제' : '전체선택'}
-          </button>
-          <button 
-            className="clear-all"
-            onClick={handleClearSelection}
-            disabled={selectedImages.length === 0}
-          >
-            선택해제
-          </button>
-        </div>
-      </div>
-
-      <div className="grid-content">
-        {images.map((image, index) => (
-          <ImageCard 
-            key={image.id}
-            image={image}
-            isSelected={selectedImages.includes(image.id)}
-            onSelect={() => toggleImageSelection(image.id)}
-          />
-        ))}
-      </div>
-    </div>
-  );
 }
 
 export default ImageGrid; 

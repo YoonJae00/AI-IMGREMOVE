@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/ImageCard.css';
+
 
 function ImageCard({ image, isSelected, onSelect }) {
   return (

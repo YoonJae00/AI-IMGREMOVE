@@ -1,12 +1,12 @@
 import React from 'react';
-import '../styles/ModeSwitcher.css';
+
 
 function ModeSwitcher({ activeMode, onModeChange }) {
   return (
     <div className="mode-switcher">
       <button 
-        className={`mode-button ${activeMode === 'background' ? 'active' : ''}`}
-        onClick={() => onModeChange('background')}
+        className={`mode-button ${activeMode === 'removeBackground' ? 'active' : ''}`}
+        onClick={() => onModeChange('removeBackground')}
       >
         <span className="mode-icon">🖼️</span>
         <div className="mode-info">

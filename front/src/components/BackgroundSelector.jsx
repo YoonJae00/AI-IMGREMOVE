@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import '../styles/BackgroundSelector.css';
+
 
 function BackgroundSelector({ setBackgroundImage, currentBackground }) {
     const onDrop = useCallback((acceptedFiles) => {
