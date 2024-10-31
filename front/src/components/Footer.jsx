@@ -3,7 +3,7 @@ import '../styles/Footer.css';
 
 function Footer() {
   return (
-    <footer className="footer">
+    <footer className="app-footer">
       <div className="footer-content">
         <p>contact : <a href="mailto:realyoon77@gmail.com">realyoon77@gmail.com</a></p>
         <p>&copy; 2024 ForSeller. All rights reserved.</p>

@@ -30,3 +30,62 @@
     font-size: 16px;
     text-align: center;
 }
+
+.instagram-background-card {
+    background-color: white;
+    border: 1px solid #dbdbdb;
+    border-radius: 8px;
+    margin: 20px 0;
+    width: 100%;
+    max-width: 935px;
+}
+
+.card-header {
+    padding: 14px;
+    border-bottom: 1px solid #dbdbdb;
+}
+
+.card-header h3 {
+    color: #262626;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.instagram-upload-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    background-color: #fafafa;
+    cursor: pointer;
+    padding: 20px;
+}
+
+.upload-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.upload-icon span {
+    color: #262626;
+    font-size: 14px;
+}
+
+.instagram-select-button {
+    background-color: #0095f6;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+    padding: 7px 16px;
+    font-size: 14px;
+}
+
+.instagram-select-button:hover {
+    background-color: #0081d6;
+}

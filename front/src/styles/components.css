@@ -1,0 +1,131 @@
+/* Upload Section Styles */
+.upload-section {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.dropzone {
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.dropzone:hover {
+  border-color: #0095f6;
+  background: #f1f9fe;
+}
+
+.upload-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+/* Image Card Styles */
+.image-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.image-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.image-card.selected {
+  border: 2px solid #0095f6;
+}
+
+.image-preview {
+  position: relative;
+  aspect-ratio: 1;
+}
+
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.selected-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,149,246,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Workspace Header Styles */
+.workspace-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.workspace-stats {
+  display: flex;
+  gap: 24px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.action-button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  background: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-button.primary {
+  background: #0095f6;
+  color: white;
+  border: none;
+}
+
+.action-button:hover {
+  background: #f8f9fa;
+}
+
+.action-button.primary:hover {
+  background: #0081d6;
+} 

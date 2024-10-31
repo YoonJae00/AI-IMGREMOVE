@@ -1,0 +1,76 @@
+.process-options {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.options-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+  margin-bottom: 16px;
+}
+
+.option-group {
+  margin-bottom: 16px;
+}
+
+.option-group:last-child {
+  margin-bottom: 0;
+}
+
+.option-label {
+  display: block;
+  font-size: 14px;
+  color: #6c757d;
+  margin-bottom: 8px;
+}
+
+.option-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.option-button {
+  padding: 10px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: white;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.option-button:hover {
+  background: #f8f9fa;
+}
+
+.option-button.active {
+  border-color: #0095f6;
+  background: #f0f9ff;
+}
+
+.option-icon {
+  font-size: 16px;
+}
+
+.quality-select, .format-select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #262626;
+  background-color: white;
+}
+
+.quality-select:focus, .format-select:focus {
+  border-color: #0095f6;
+  outline: none;
+} 
