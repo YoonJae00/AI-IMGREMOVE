@@ -18,8 +18,10 @@ function App() {
     const [processedCount, setProcessedCount] = useState(0);
     const [selectedImages, setSelectedImages] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [processedResults, setProcessedResults] = useState([]);
-    const [currentProgress, setCurrentProgress] = useState({});
+    const [processedResults, setProcessedResults] = useState({});
+    const [imageProgress, setImageProgress] = useState({});
+    const [backgroundType, setBackgroundType] = useState('transparent');
+    const [customBackground, setCustomBackground] = useState(null);
 
     const handleFileDrop = useCallback((acceptedFiles) => {
         if (activeTab === 'removeBackground' && previews.length + acceptedFiles.length > 50) {
@@ -54,46 +56,102 @@ function App() {
     };
 
     const handleBulkProcess = async () => {
+        if (selectedImages.length === 0) {
+            alert('처리할 이미지를 선택해주세요.');
+            return;
+        }
+
         try {
             setIsProcessing(true);
             const formData = new FormData();
             
-            // 선택된 이미지만 처리
+            // 선택된 이미지들 추가
             const selectedFiles = selectedImages.map(index => files[index]);
             selectedFiles.forEach(file => {
                 formData.append('photos', file);
             });
 
+            // 배경 타입과 배경 이미지 추가
+            formData.append('backgroundType', backgroundType);
             if (backgroundType === 'custom' && customBackground) {
                 formData.append('background', customBackground);
             }
 
-            const response = await axios.post('http://localhost:3000/process-images', formData, {
-                responseType: 'blob',
+            // 진행 상태 모니터링 설정
+            const eventSource = new EventSource('http://localhost:3000/api/remove-background/progress');
+            
+            eventSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                // 이미지 ID로 인덱스 찾기
+                const index = selectedImages.findIndex(i => 
+                    files[i].name === data.imageId || // 파일명으로 매칭
+                    i === parseInt(data.imageId) // 인덱스로 매칭
+                );
+                
+                if (index !== -1) {
+                    setImageProgress(prev => ({
+                        ...prev,
+                        [index]: {
+                            progress: data.progress,
+                            status: data.status
+                        }
+                    }));
+                }
+            };
+
+            // API 요청
+            const response = await axios.post('http://localhost:3000/api/remove-background', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
-                },
-                onUploadProgress: (progressEvent) => {
-                    const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    setCurrentProgress(prev => ({
-                        ...prev,
-                        total: progress
-                    }));
                 }
             });
 
-            const processedImageUrls = await handleProcessedResponse(response);
-            setProcessedResults(prev => ({
-                ...prev,
-                ...processedImageUrls
-            }));
-            setProcessedCount(prev => prev + selectedFiles.length);
+            eventSource.close();
+
+            if (response.data.success) {
+                const { processedImages } = response.data.data;
+                
+                // 처리된 이미지 결과 저장
+                const newResults = {};
+                processedImages.forEach(img => {
+                    // 파일명이나 인덱스로 매칭
+                    const index = selectedImages.findIndex(i => 
+                        files[i].name === img.originalName || 
+                        i === parseInt(img.id)
+                    );
+                    
+                    if (index !== -1) {
+                        newResults[index] = {
+                            url: img.url,
+                            status: img.status,
+                            error: img.error
+                        };
+                    }
+                });
+
+                setProcessedResults(prev => ({
+                    ...prev,
+                    ...newResults
+                }));
+
+                // 처리된 이미지 수 업데이트
+                setProcessedCount(prev => prev + processedImages.length);
+
+                // 성공적으로 처리된 이미지가 있다면 알림
+                const successCount = processedImages.filter(img => img.status === 'completed').length;
+                if (successCount > 0) {
+                    alert(`${successCount}개의 이미지가 성공적으로 처리되었습니다.`);
+                }
+            } else {
+                throw new Error(response.data.error?.message || '처리 중 오류가 발생했습니다.');
+            }
 
         } catch (error) {
             console.error('처리 중 오류 발생:', error);
-            alert('처리 중 오류가 발생했습니다.');
+            alert(error.message || '처리 중 오류가 발생했습니다.');
         } finally {
             setIsProcessing(false);
+            setImageProgress({});
         }
     };
 
@@ -171,7 +229,7 @@ function App() {
                                 selectedImages={selectedImages}
                                 onSelect={handleImageSelect}
                                 processedResults={processedResults}
-                                currentProgress={currentProgress}
+                                imageProgress={imageProgress}
                                 isProcessing={isProcessing}
                             />
                             <WorkspaceFooter 

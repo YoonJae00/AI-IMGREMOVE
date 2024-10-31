@@ -663,4 +663,40 @@
 .studio-upload-placeholder .upload-icon {
     font-size: 48px;
     margin-bottom: var(--spacing-4);
+}
+
+.progress-bar.pending {
+    background: var(--gray-100);
+    border: 1px dashed var(--gray-300);
+}
+
+.progress-status .pending-text {
+    color: var(--gray-500);
+}
+
+.result-placeholder.pending {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-2);
+    color: var(--gray-500);
+    background: var(--gray-50);
+    border: 1px dashed var(--gray-300);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-4);
+}
+
+.pending-icon {
+    font-size: 24px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 } 
