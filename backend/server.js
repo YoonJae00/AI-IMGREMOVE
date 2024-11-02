@@ -47,8 +47,14 @@ class ImageProcessor extends EventEmitter {
   }
 
   updateProgress(imageId, progress, status) {
-    this.emit('progress', { imageId, progress, status });
-    this.processingImages.set(imageId, { progress, status });
+    const progressData = {
+      imageId,
+      progress,
+      status,
+      timestamp: Date.now()
+    };
+    this.emit('progress', progressData);
+    this.processingImages.set(imageId, progressData);
   }
 
   async processImage(file, options = {}) {
@@ -64,70 +70,62 @@ class ImageProcessor extends EventEmitter {
       if (file.size > LIMITATIONS.maxFileSize) {
         throw new Error(ERROR_CODES.FILE_TOO_LARGE);
       }
-  
-      // 메인 이미지 업로드
-      this.updateProgress(imageId, 20, 'processing');
+
+      // 이미지 업로드 (20%)
+      this.updateProgress(imageId, 20, 'uploading');
       const mainImageResponse = await this.comfyui.uploadImage(file);
       await this.comfyui.waitForImageUpload(mainImageResponse.name);
       
+      // 워크플로우 준비 (40%)
       this.updateProgress(imageId, 40, 'processing');
-  
-      // 워크플로우 가져오기
       let workflow = await this.comfyui.getWorkflow('bgrm_api');
-      
-      // 로깅
-      console.log('Original workflow:', JSON.stringify(workflow, null, 2));
-      // 메인 이미지를 노드 11에 설정
       workflow["11"].inputs.image = mainImageResponse.name;
-      
+
       if (!options.backgroundImage) {
-        // 배경 이미지가 없는 경우, 노드 66, 69, 70 제거
         delete workflow["66"];
         delete workflow["69"];
         delete workflow["70"];
-        
-        // 노드 65(LayerBlend) 제거
         delete workflow["65"];
-        
-        // PreviewImage 노드(68)를 배경제거 결과(노드 12)에 직접 연결
         workflow["68"].inputs.images = ["12", 0];
       } else {
-        // 배경 이미지 설정
         const bgImageResponse = await this.comfyui.uploadImage(options.backgroundImage);
         await this.comfyui.waitForImageUpload(bgImageResponse.name);
         workflow["66"].inputs.image = bgImageResponse.name;
       }
-      
-      // 수정된 워크플로우 로그
-      console.log('Modified workflow:', JSON.stringify(workflow, null, 2));
-      
+
+      // 이미지 처리 (60%)
       this.updateProgress(imageId, 60, 'processing');
-      
-      // 프롬프트 전송
       const promptResponse = await this.comfyui.sendPrompt(workflow);
       
+      // 결과 대기 (80%)
       this.updateProgress(imageId, 80, 'processing');
-      
-      // 결과 이미지 대기
       const imageFilename = await this.comfyui.waitForImage(promptResponse.prompt_id);
-      const processedUrl = `${this.comfyui.baseUrl}/view?filename=${imageFilename}&type=temp`;
+      
+      // 완료 (100%)
+      const result = {
+        id: imageId,
+        originalName: file.originalname,
+        url: `${this.comfyui.baseUrl}/view?filename=${imageFilename}&type=temp`,
+        progress: 100,
+        status: 'completed'
+      };
       
       this.updateProgress(imageId, 100, 'completed');
-  
+      return result;
+
+    } catch (error) {
+      this.updateProgress(imageId, 100, 'failed');
       return {
         id: imageId,
         originalName: file.originalname,
-        url: processedUrl,
-        status: 'completed'
+        progress: 100,
+        status: 'failed',
+        error: error.message
       };
-  
-    } catch (error) {
-      console.error('Image processing error:', error);
-      this.updateProgress(imageId, 100, 'failed');
-      throw error;
     }
   }
 }
+
 
 // Express 앱 초기화
 const app = express();
@@ -179,37 +177,75 @@ app.post('/api/remove-background', upload.fields([
     const processedImages = [];
     const backgroundImage = req.files['background']?.[0];
 
+    // 즉시 응답 보내기
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    });
+
+    // 각 이미지 순차 처리
     for (const file of req.files['photos']) {
       try {
         const result = await imageProcessor.processImage(file, { 
           backgroundImage: backgroundImage 
         });
         processedImages.push(result);
+        
+        // 진행 상황 전송
+        res.write(`data: ${JSON.stringify({
+          type: 'progress',
+          data: {
+            processedImages,
+            currentImage: result,
+            totalProcessed: processedImages.length,
+            totalImages: req.files['photos'].length
+          }
+        })}\n\n`);
+
       } catch (error) {
-        processedImages.push({
+        const failedResult = {
           id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           originalName: file.originalname,
           status: 'failed',
           error: error.message
-        });
+        };
+        processedImages.push(failedResult);
+        
+        // 에러 상황 전송
+        res.write(`data: ${JSON.stringify({
+          type: 'error',
+          data: {
+            processedImages,
+            currentImage: failedResult,
+            totalProcessed: processedImages.length,
+            totalImages: req.files['photos'].length
+          }
+        })}\n\n`);
       }
     }
 
-    res.json({
-      success: true,
+    // 모든 처리 완료 후 최종 결과 전송
+    res.write(`data: ${JSON.stringify({
+      type: 'complete',
       data: {
         processedImages,
-        totalProcessed: processedImages.length
+        totalProcessed: processedImages.length,
+        totalImages: req.files['photos'].length
       }
-    });
+    })}\n\n`);
+
+    res.end();
+
   } catch (error) {
-    res.status(500).json({
-      success: false,
+    res.write(`data: ${JSON.stringify({
+      type: 'error',
       error: {
         code: 'PROCESSING_ERROR',
         message: error.message || ERROR_CODES.PROCESSING_ERROR
       }
-    });
+    })}\n\n`);
+    res.end();
   }
 });
 

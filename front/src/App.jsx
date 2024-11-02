@@ -9,6 +9,7 @@ import StudioMode from './components/StudioMode';
 import './styles/design-system.css';
 import './styles/components.css';
 import axios from 'axios';
+import JSZip from 'jszip';
 
 function App() {
     const [activeTab, setActiveTab] = useState('removeBackground');
@@ -65,107 +66,111 @@ function App() {
             setIsProcessing(true);
             const formData = new FormData();
             
-            // 선택된 이미지들 추가
-            const selectedFiles = selectedImages.map(index => files[index]);
-            selectedFiles.forEach(file => {
-                formData.append('photos', file);
+            selectedImages.forEach(index => {
+                formData.append('photos', files[index]);
             });
 
-            // 배경 타입과 배경 이미지 추가
-            formData.append('backgroundType', backgroundType);
-            if (backgroundType === 'custom' && customBackground) {
-                formData.append('background', customBackground);
-            }
-
-            // 진행 상태 모니터링 설정
-            const eventSource = new EventSource('http://localhost:3000/api/remove-background/progress');
-            
-            eventSource.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                // 이미지 ID로 인덱스 찾기
-                const index = selectedImages.findIndex(i => 
-                    files[i].name === data.imageId || // 파일명으로 매칭
-                    i === parseInt(data.imageId) // 인덱스로 매칭
-                );
-                
-                if (index !== -1) {
-                    setImageProgress(prev => ({
-                        ...prev,
-                        [index]: {
-                            progress: data.progress,
-                            status: data.status
-                        }
-                    }));
-                }
-            };
-
-            // API 요청
-            const response = await axios.post('http://localhost:3000/api/remove-background', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
+            const response = await fetch('http://localhost:3000/api/remove-background', {
+                method: 'POST',
+                body: formData
             });
 
-            eventSource.close();
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
 
-            if (response.data.success) {
-                const { processedImages } = response.data.data;
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
                 
-                // 처리된 이미지 결과 저장
-                const newResults = {};
-                processedImages.forEach(img => {
-                    // 파일명이나 인덱스로 매칭
-                    const index = selectedImages.findIndex(i => 
-                        files[i].name === img.originalName || 
-                        i === parseInt(img.id)
-                    );
+                const events = decoder.decode(value).split('\n\n');
+                for (const event of events) {
+                    if (!event.trim()) continue;
                     
-                    if (index !== -1) {
-                        newResults[index] = {
-                            url: img.url,
-                            status: img.status,
-                            error: img.error
-                        };
+                    try {
+                        const parsedData = JSON.parse(event.replace('data: ', ''));
+                        
+                        switch (parsedData.type) {
+                            case 'progress':
+                                const { currentImage } = parsedData.data;
+                                const index = selectedImages.findIndex(i => 
+                                    files[i].name === currentImage.originalName
+                                );
+                                
+                                if (index !== -1) {
+                                    setImageProgress(prev => ({
+                                        ...prev,
+                                        [index]: {
+                                            progress: currentImage.progress,
+                                            status: currentImage.status
+                                        }
+                                    }));
+
+                                    if (currentImage.status === 'completed') {
+                                        setProcessedResults(prev => ({
+                                            ...prev,
+                                            [index]: {
+                                                url: currentImage.url,
+                                                status: 'completed'
+                                            }
+                                        }));
+                                        setProcessedCount(prev => prev + 1);
+                                    }
+                                }
+                                break;
+
+                            case 'complete':
+                                console.log('모든 이미지 처리 완료');
+                                break;
+
+                            case 'error':
+                                console.error('Error:', parsedData.error);
+                                break;
+                        }
+                    } catch (error) {
+                        console.error('Event parsing error:', error);
                     }
-                });
-
-                setProcessedResults(prev => ({
-                    ...prev,
-                    ...newResults
-                }));
-
-                // 처리된 이미지 수 업데이트
-                setProcessedCount(prev => prev + processedImages.length);
-
-                // 성공적으로 처리된 이미지가 있다면 알림
-                const successCount = processedImages.filter(img => img.status === 'completed').length;
-                if (successCount > 0) {
-                    alert(`${successCount}개의 이미지가 성공적으로 처리되었습니다.`);
                 }
-            } else {
-                throw new Error(response.data.error?.message || '처리 중 오류가 발생했습니다.');
             }
-
         } catch (error) {
-            console.error('처리 중 오류 발생:', error);
-            alert(error.message || '처리 중 오류가 발생했습니다.');
+            console.error('Error:', error);
+            alert('처리 중 오류가 발생했습니다.');
         } finally {
             setIsProcessing(false);
-            setImageProgress({});
         }
     };
 
-    const handleDownloadSelected = () => {
-        selectedImages.forEach(index => {
-            if (processedResults[index]) {
-                const link = document.createElement('a');
-                link.href = processedResults[index];
-                link.download = `processed_image_${index + 1}.png`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        });
+    const handleDownloadSelected = async () => {
+        if (selectedImages.length === 0) {
+            alert('다운로드할 이미지를 선택해주세요.');
+            return;
+        }
+
+        try {
+            const zip = new JSZip();
+            const promises = selectedImages.map(async (index) => {
+                if (processedResults[index]) {
+                    const response = await fetch(processedResults[index].url);
+                    const blob = await response.blob();
+                    const originalFileName = files[index].name;
+                    const fileNameWithoutExt = originalFileName.substring(0, originalFileName.lastIndexOf('.'));
+                    zip.file(`${fileNameWithoutExt}.png`, blob);
+                }
+            });
+
+            await Promise.all(promises);
+            
+            const content = await zip.generateAsync({ type: 'blob' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = 'processed_images.zip';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        } catch (error) {
+            console.error('다운로드 중 오류 발생:', error);
+            alert('다운로드 중 오류가 발생했습니다.');
+        }
     };
 
     const handleSelectAll = () => {
