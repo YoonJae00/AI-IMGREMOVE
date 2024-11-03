@@ -10,8 +10,14 @@ function WorkspaceHeader({
     onDownloadSelected,
     isProcessing,
     onSelectAll,
-    isAllSelected
+    isAllSelected,
+    remainingQuota
 }) {
+    const handleProcessClick = () => {
+        console.log('처리 버튼 클릭됨');
+        onBulkProcess();
+    };
+
     return (
         <div className="workspace-header">
             <div className="workspace-stats">
@@ -47,11 +53,12 @@ function WorkspaceHeader({
                 </button>
                 <button 
                     className="action-button primary"
-                    onClick={onBulkProcess}
-                    disabled={selectedCount === 0 || isProcessing}
+                    onClick={handleProcessClick}
+                    disabled={selectedCount === 0 || isProcessing || remainingQuota <= 0}
                 >
                     <span className="action-icon">✨</span>
-                    {isProcessing ? '처리 중...' : '선택 처리하기'}
+                    {isProcessing ? '처리 중...' : 
+                     remainingQuota <= 0 ? '일일 한도 초과' : '선택 처리하기'}
                 </button>
             </div>
         </div>

@@ -1,15 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 
-function ProcessOptions() {
-  const [backgroundType, setBackgroundType] = useState('transparent');
-  const [customBackground, setCustomBackground] = useState(null);
-
+function ProcessOptions({ backgroundType, setBackgroundType, customBackground, setCustomBackground }) {
   const onDrop = useCallback((acceptedFiles) => {
     if (acceptedFiles && acceptedFiles.length > 0) {
       setCustomBackground(acceptedFiles[0]);
     }
-  }, []);
+  }, [setCustomBackground]);
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,

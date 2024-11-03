@@ -27,19 +27,22 @@ function ImageGrid({
                             <img src={preview.preview} alt={`원본 ${index + 1}`} />
                         </div>
                         
-                        <div className="progress-section">
-                            <div className={`progress-bar ${status === 'pending' ? 'pending' : ''}`}>
+                        <div className="image-progress">
+                            <div className={`image-progress-bar ${status === 'pending' ? 'pending' : ''}`}>
                                 <div 
-                                    className="progress-fill" 
-                                    style={{ width: `${progress}%` }} 
+                                    className="image-progress-fill" 
+                                    style={{ 
+                                        width: `${status === 'pending' ? 0 : progress}%`,
+                                        opacity: status === 'pending' ? 0.5 : 1
+                                    }} 
                                 />
                             </div>
-                            <div className="progress-status">
+                            <div className="image-progress-status">
                                 <span className={status === 'pending' ? 'pending-text' : ''}>
                                     {status === 'pending' ? '처리 대기 중' : 
                                      status === 'completed' ? '완료' : '처리 중...'}
                                 </span>
-                                <span>{progress}%</span>
+                                <span>{status === 'pending' ? '0' : progress}%</span>
                             </div>
                         </div>
 
@@ -47,7 +50,7 @@ function ImageGrid({
                             {processedResults[index] ? (
                                 <img src={processedResults[index].url} alt={`결과 ${index + 1}`} />
                             ) : (
-                                <div className="result-placeholder pending">
+                                <div className="result-placeholder">
                                     <span className="pending-icon">⏳</span>
                                     <span>처리 대기 중</span>
                                 </div>

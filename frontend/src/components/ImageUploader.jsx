@@ -1,16 +1,12 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import axios from 'axios';
 import BackgroundSelector from './BackgroundSelector';
 
-
-function ImageUploader() {
+function ImageUploader({ onProcess, quota, limits, checkQuota }) {
   const [previews, setPreviews] = useState([]);
   const [files, setFiles] = useState([]);
-  const [backgroundImage, setBackgroundImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [estimatedTime, setEstimatedTime] = useState(0);
-  const [remainingTime, setRemainingTime] = useState(0);
+  const [error, setError] = useState(null);
   const [backgroundType, setBackgroundType] = useState('transparent');
   const [customBackground, setCustomBackground] = useState(null);
 
@@ -28,12 +24,6 @@ function ImageUploader() {
     setFiles(newPreviews.map(preview => preview.file));
   }, [previews]);
 
-  const onDropBackground = useCallback((acceptedFiles) => {
-    if (acceptedFiles && acceptedFiles.length > 0) {
-      setBackgroundImage(acceptedFiles[0]);
-    }
-  }, []);
-
   const removeImage = (index) => {
     const newPreviews = [...previews];
     newPreviews.splice(index, 1);
@@ -44,7 +34,7 @@ function ImageUploader() {
   const clearAllImages = () => {
     setPreviews([]);
     setFiles([]);
-    setBackgroundImage(null);
+    setCustomBackground(null);
   };
 
   const {
@@ -57,66 +47,47 @@ function ImageUploader() {
     multiple: true
   });
 
-  const {
-    getRootProps: getBackgroundRootProps,
-    getInputProps: getBackgroundInputProps,
-    isDragActive: isBackgroundDragActive
-  } = useDropzone({
-    onDrop: onDropBackground,
-    accept: 'image/*',
-    multiple: false
-  });
-
   const uploadAndProcess = async () => {
+    if (!checkQuota('background')) {
+      alert('일일 처리 한도를 초과했습니다.');
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const totalTime = files.length * 7;
-      setEstimatedTime(totalTime);
-      setRemainingTime(totalTime);
-
-      const timer = setInterval(() => {
-        setRemainingTime((prevTime) => {
-          if (prevTime <= 0) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prevTime - 1;
-        });
-      }, 1000);
+      setError(null);
 
       const formData = new FormData();
-      files.forEach((file, index) => {
+      files.forEach(file => {
         formData.append('photos', file);
       });
 
-      if (backgroundImage) {
-        formData.append('background', backgroundImage);
+      if (backgroundType === 'custom' && customBackground) {
+        formData.append('background', customBackground);
       }
 
-      const response = await axios.post('http://localhost:3000/process-images', formData, {
-        responseType: 'blob',
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+      const response = await fetch('/api/remove-background', {
+        method: 'POST',
+        body: formData
       });
 
-      // 처리된 이미지 다운로드 로직
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'processed_images.zip');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      if (!response.ok) {
+        throw new Error('이미지 처리 실패');
+      }
 
-      console.log('이미지 처리 및 다운로드 완료');
+      const result = await response.json();
+      
+      if (result.success) {
+        onProcess(result.data);
+        clearAllImages();
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       console.error('업로드 또는 처리 중 오류 발생:', error);
-      alert('류가 발생했습니다. 나중에 다시 시도해주세요.');
+      setError(error.message || '오류가 발생했습니다. 나중에 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
-      setEstimatedTime(0);
-      setRemainingTime(0);
     }
   };
 
@@ -170,6 +141,12 @@ function ImageUploader() {
           ))}
         </div>
 
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
+
         <div className="control-panel">
           <div className="upload-status">
             <span className="image-count">{previews.length}/50 이미지</span>
@@ -186,7 +163,7 @@ function ImageUploader() {
                 onClick={uploadAndProcess}
                 disabled={previews.length === 0 || isLoading}
               >
-                {isLoading ? `처리 중... ${remainingTime}초` : '배경 제거하기'}
+                {isLoading ? '처리 중...' : '배경 제거하기'}
               </button>
             </div>
           </div>

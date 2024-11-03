@@ -5,7 +5,7 @@ function Footer() {
   return (
     <footer className="app-footer">
       <div className="footer-content">
-        <p>contact : <a href="mailto:realyoon77@gmail.com">realyoon77@gmail.com</a></p>
+        <p>contact : <a href="mailto:developer.yoonjae@gmail.com">developer.yoonjae@gmail.com</a></p>
         <p>&copy; 2024 ForSeller. All rights reserved.</p>
         <p>
           <a href="https://forms.gle/bhF7JZQr3oiaTvma9" target="_blank" rel="noopener noreferrer">

@@ -3,22 +3,34 @@ import '../styles/components.css';
 
 function WorkspaceFooter({ 
     estimatedTime, 
-    remainingQuota, 
+    remainingQuota,
+    totalQuota, 
     onBulkProcess, 
     onDownloadAll, 
     isProcessing,
     totalImages
 }) {
+    const handleBulkProcessClick = () => {
+        console.log('일괄 처리 시작 버튼 클릭됨');
+        onBulkProcess();
+    };
+
     return (
         <div className="workspace-footer">
             <div className="processing-info">
-                <div className="time-estimate">
-                    <span className="info-label">예상 처리 시간:</span>
-                    <span className="info-value">약 {estimatedTime}분</span>
+                <div className="info-item">
+                    <span className="info-icon">⏱️</span>
+                    <div className="info-text">
+                        <span className="info-label">예상 처리 시간</span>
+                        <span className="info-value">약 {estimatedTime}분</span>
+                    </div>
                 </div>
-                <div className="daily-quota">
-                    <span className="info-label">남은 처리 횟수:</span>
-                    <span className="info-value">{remainingQuota}/10회</span>
+                <div className="info-item">
+                    <span className="info-icon">🎯</span>
+                    <div className="info-text">
+                        <span className="info-label">남은 처리 횟수</span>
+                        <span className="info-value">{remainingQuota}/{totalQuota}회</span>
+                    </div>
                 </div>
             </div>
             
@@ -33,8 +45,8 @@ function WorkspaceFooter({
                 </button>
                 <button 
                     className="action-button primary"
-                    onClick={onBulkProcess}
-                    disabled={isProcessing || totalImages === 0}
+                    onClick={handleBulkProcessClick}
+                    disabled={isProcessing || totalImages === 0 || remainingQuota === 0}
                 >
                     <span className="button-icon">✨</span>
                     {isProcessing ? '처리 중...' : '일괄 처리 시작'}

@@ -60,57 +60,14 @@
       "title": "Empty Latent Image"
     }
   },
-  "65": {
-    "inputs": {
-      "invert_mask": false,
-      "blend_mode": "normal",
-      "opacity": 100,
-      "x_percent": 50,
-      "y_percent": 50,
-      "mirror": "None",
-      "scale": 1,
-      "aspect_ratio": 1,
-      "rotate": 0,
-      "transform_method": "lanczos",
-      "anti_aliasing": 0,
-      "background_image": [
-        "69",
-        0
-      ],
-      "layer_image": [
-        "12",
-        0
-      ],
-      "layer_mask": [
-        "12",
-        1
-      ]
-    },
-    "class_type": "LayerUtility: ImageBlendAdvance V2",
-    "_meta": {
-      "title": "LayerUtility: ImageBlendAdvance V2"
-    }
-  },
   "66": {
     "inputs": {
-      "image": "AGM7o9Z_WCg4-9wKZD1IN4Z1eUZapTiVR1dut2QpiWJmD3AOQDwr5ZyBymgGpAkf1XnC0cljkzMIcFjZRafHPA.webp",
+      "image": "다운로드.jpg",
       "upload": "image"
     },
     "class_type": "LoadImage",
     "_meta": {
       "title": "Load Image"
-    }
-  },
-  "68": {
-    "inputs": {
-      "images": [
-        "65",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
     }
   },
   "69": {
@@ -146,6 +103,42 @@
     "class_type": "EmptyLatentImage",
     "_meta": {
       "title": "Empty Latent Image"
+    }
+  },
+  "71": {
+    "inputs": {
+      "invert_mask": false,
+      "blend_mode": "normal",
+      "opacity": 100,
+      "background_image": [
+        "69",
+        0
+      ],
+      "layer_image": [
+        "12",
+        0
+      ],
+      "layer_mask": [
+        "12",
+        1
+      ]
+    },
+    "class_type": "LayerUtility: ImageBlend",
+    "_meta": {
+      "title": "LayerUtility: ImageBlend"
+    }
+  },
+  "72": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "71",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
     }
   }
 }
