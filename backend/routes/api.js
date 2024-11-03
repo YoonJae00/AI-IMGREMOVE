@@ -3,13 +3,17 @@ const router = express.Router();
 const multer = require('multer');
 const ComfyUIManager = require('../services/ComfyUIManager');
 
-router.post('/remove-background', multer().array('photos'), async (req, res) => {
+router.post('/remove-background', multer().fields([
+    { name: 'photos', maxCount: 50 },
+    { name: 'background', maxCount: 1 }
+]), async (req, res) => {
     try {
-        const files = req.files;
+        const files = req.files.photos;
+        const backgroundFile = req.files.background?.[0];
         const backgroundType = req.body.backgroundType || 'transparent';
         
         const results = await Promise.all(
-            files.map(file => ComfyUIManager.processImage(backgroundType, file))
+            files.map(file => ComfyUIManager.processImage(backgroundType, file, backgroundFile))
         );
 
         res.json({

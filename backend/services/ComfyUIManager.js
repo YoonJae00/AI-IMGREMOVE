@@ -12,15 +12,21 @@ class ComfyUIManager {
     }
     
 
-    async processImage(type, file) {
+    async processImage(type, file, backgroundFile = null) {
         try {
             // 이미지 업로드
             const uploadResult = await this.uploadImage(file);
+            let backgroundUploadResult = null;
+            
+            if (backgroundFile) {
+                backgroundUploadResult = await this.uploadImage(backgroundFile);
+            }
             
             // 워크플로우 실행
             const workflow = this.getWorkflow(type);
             const modifiedWorkflow = this.modifyWorkflow(workflow, {
-                inputImage: uploadResult.name
+                inputImage: uploadResult.name,
+                backgroundImage: backgroundUploadResult?.name
             });
             
             const promptResult = await this.executeWorkflow(modifiedWorkflow);
@@ -80,7 +86,7 @@ class ComfyUIManager {
     }
 
     async waitForResult(promptId) {
-        const maxRetries = 20;
+        const maxRetries = 60;
         let retryCount = 0;
 
         while (retryCount < maxRetries) {
@@ -88,17 +94,21 @@ class ComfyUIManager {
                 const response = await fetch(`${this.baseUrl}/history/${promptId}`);
                 const result = await response.json();
                 
-                if (result?.[promptId]?.status?.status_str === 'success' && 
-                    result[promptId].outputs?.['72']?.images?.[0]) {
-                    
-                    const image = result[promptId].outputs['72'].images[0];
-                    return {
-                        url: `${this.baseUrl}/view?filename=${image.filename}&type=${image.type}&subfolder=${image.subfolder || ''}`,
-                        previewUrl: `${this.baseUrl}/view?filename=${image.filename}&type=${image.type}&subfolder=${image.subfolder || ''}&preview=true`
-                    };
+                if (result?.[promptId]?.status?.status_str === 'success') {
+                    const outputNode = result[promptId].outputs?.['72'] || result[promptId].outputs?.['52'];
+                    if (outputNode?.images?.[0]) {
+                        const image = outputNode.images[0];
+                        return {
+                            url: `${this.baseUrl}/view?filename=${image.filename}&type=${image.type}&subfolder=${image.subfolder || ''}`,
+                            previewUrl: `${this.baseUrl}/view?filename=${image.filename}&type=${image.type}&subfolder=${image.subfolder || ''}&preview=true`
+                        };
+                    }
+                } else if (result?.[promptId]?.status?.status_str === 'error') {
+                    throw new Error('이미지 처리 중 오류가 발생했습니다.');
                 }
             } catch (error) {
                 console.error('결과 조회 중 오류:', error);
+                throw error;
             }
             
             await new Promise(resolve => setTimeout(resolve, 3000));
@@ -112,7 +122,7 @@ class ComfyUIManager {
         switch(type) {
             case 'transparent':
                 return this.workflows.noBackground;
-            case 'background':
+            case 'custom':
                 return this.workflows.withBackground;
             case 'studio':
                 return this.workflows.studio;
@@ -126,7 +136,6 @@ class ComfyUIManager {
     }
 
     modifyWorkflow(workflow, options) {
-        // 워크플로우 깊은 복사
         const modifiedWorkflow = JSON.parse(JSON.stringify(workflow));
         
         // LoadImage 노드 찾기 (입력 이미지)
@@ -138,16 +147,11 @@ class ComfyUIManager {
             modifiedWorkflow[loadImageNode].inputs.image = options.inputImage;
         }
 
-        // 배경 이미지가 있는 경우 (rmbg_v3_api.json 워크플로우용)
-        if (options.backgroundImage) {
-            const backgroundLoadNode = Object.entries(modifiedWorkflow).find(
-                ([id, node]) => 
-                    node.class_type === "LoadImage" && 
-                    id !== loadImageNode
-            )?.[0];
-
-            if (backgroundLoadNode) {
-                modifiedWorkflow[backgroundLoadNode].inputs.image = options.backgroundImage;
+        // studio 모드일 때 추가 설정
+        if (this.getCurrentWorkflowType() === 'studio') {
+            // pro_v3_api.json의 특정 노드 설정
+            if (modifiedWorkflow['16']) {
+                modifiedWorkflow['16'].inputs.seed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
             }
         }
 

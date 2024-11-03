@@ -29,7 +29,7 @@ function StudioMode({ studioImage, quota, limits, checkQuota, incrementQuota }) 
         
         try {
             const formData = new FormData();
-            formData.append('image', studioImage.file);
+            formData.append('image', studioImage);
 
             const response = await fetch('/api/studio-process', {
                 method: 'POST',
@@ -37,7 +37,8 @@ function StudioMode({ studioImage, quota, limits, checkQuota, incrementQuota }) 
             });
 
             if (!response.ok) {
-                throw new Error('이미지 처리 실패');
+                const errorData = await response.json();
+                throw new Error(errorData.error || '이미지 처리 실패');
             }
 
             const result = await response.json();
@@ -45,7 +46,7 @@ function StudioMode({ studioImage, quota, limits, checkQuota, incrementQuota }) 
             if (result.success) {
                 setProcessedImage(result.data.url);
                 setDownloadUrl(result.data.url);
-                setOriginalFileName(studioImage.file.name);
+                setOriginalFileName(studioImage.name);
                 incrementQuota('studio');
             } else {
                 throw new Error(result.error);
