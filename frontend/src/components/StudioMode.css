@@ -187,4 +187,34 @@
 
 .download-button:hover {
     background-color: #2da84e;
+}
+
+.studio-workspace .progress-bar-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 600px;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.studio-workspace .progress-bar {
+    height: 8px;
+    background-color: #007AFF;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.studio-workspace .progress-text {
+    display: block;
+    text-align: center;
+    margin-top: 8px;
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
 } 
