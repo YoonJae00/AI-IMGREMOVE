@@ -19,40 +19,45 @@ const ComfyUIManager = require('../services/ComfyUIManager');
 
 router.post('/remove-background', uploadFields, async (req, res) => {
     try {
-        console.log('=== 요청 시작 ===');
-        console.log('Background Type:', req.body.backgroundType);
-        console.log('Custom Background:', req.files.background ? '있음' : '없음');
-        
         const files = req.files.photos;
         let backgroundType = req.body.backgroundType || 'transparent';
         const customBackground = req.files.background?.[0];
         
         if (backgroundType === 'custom' && customBackground) {
             backgroundType = 'background';
-            console.log('Background Type 변경됨:', backgroundType);
         }
+
+        const totalImages = files.length;
         
-        console.log('처리할 이미지 수:', files.length);
-        
-        const results = await Promise.allSettled(
-            files.map(file => ComfyUIManager.processImage(backgroundType, file, customBackground))
+        // 모든 이미지를 동시에 처리
+        const processPromises = files.map((file, index) => 
+            ComfyUIManager.processImage(backgroundType, file, customBackground)
+                .then(result => ({
+                    success: true,
+                    data: [{
+                        url: result.url,
+                        originalName: file.originalname,
+                        index: index
+                    }],
+                    progress: {
+                        current: index + 1,
+                        total: totalImages
+                    }
+                }))
+                .catch(error => {
+                    console.error(`이미지 처리 실패 (${index + 1}/${totalImages}):`, error);
+                    return null;
+                })
         );
 
-        const successResults = results
-            .filter(r => r.status === 'fulfilled')
-            .map((result, index) => ({
-                url: result.value.url,
-                originalName: files[index].originalname
-            }));
-
-        const failedCount = results.filter(r => r.status === 'rejected').length;
-
-        res.json({
-            success: true,
-            data: successResults,
-            failedCount,
-            totalCount: files.length
-        });
+        // 각 이미지가 처리될 때마다 결과 전송
+        for await (const result of processPromises) {
+            if (result) {
+                res.write(JSON.stringify(result) + '\n');
+            }
+        }
+        
+        res.end();
     } catch (error) {
         console.error('이미지 처리 중 오류:', error);
         res.status(500).json({
@@ -64,20 +69,35 @@ router.post('/remove-background', uploadFields, async (req, res) => {
 
 router.post('/studio-process', uploadSingle, async (req, res) => {
     try {
-        const result = await ComfyUIManager.processImage('studio', req.file);
-        res.json({
+        // SSE 헤더 설정
+        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Cache-Control', 'no-cache');
+        
+        // 진행 상황 업데이트 함수
+        const updateProgress = (progress) => {
+            res.write(JSON.stringify({ progress }) + '\n');
+        };
+
+        // 이미지 처리 시작
+        const result = await ComfyUIManager.processImage('studio', req.file, null, updateProgress);
+        
+        // 최종 결과 전송
+        res.write(JSON.stringify({
             success: true,
             data: {
                 url: result.url,
                 previewUrl: result.previewUrl
             }
-        });
+        }) + '\n');
+        
+        res.end();
     } catch (error) {
         console.error('이미지 처리 중 오류:', error);
-        res.status(500).json({
+        res.write(JSON.stringify({
             success: false,
             error: error.message
-        });
+        }) + '\n');
+        res.end();
     }
 });
 

@@ -57,19 +57,12 @@ function App() {
             setIsProcessing(true);
             setError(null);
             
-            const initialProgress = {};
-            selectedImages.forEach(index => {
-                initialProgress[index] = { progress: 0, status: 'pending' };
-            });
-            setImageProgress(initialProgress);
-            
             const formData = new FormData();
             selectedImages.forEach(index => {
                 formData.append('photos', files[index]);
             });
 
             formData.append('backgroundType', backgroundType);
-
             if (backgroundType === 'custom' && customBackground) {
                 formData.append('background', customBackground);
             }
@@ -79,26 +72,43 @@ function App() {
                 body: formData
             });
 
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error || '이미지 처리 실패');
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                const lines = decoder.decode(value).split('\n');
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    
+                    try {
+                        const result = JSON.parse(line);
+                        if (result.success && result.data) {
+                            const newResults = {};
+                            result.data.forEach(img => {
+                                newResults[selectedImages[img.index]] = { url: img.url };
+                                setImageProgress(prev => ({
+                                    ...prev,
+                                    [selectedImages[img.index]]: { 
+                                        progress: 100, 
+                                        status: 'completed' 
+                                    }
+                                }));
+                            });
+                            setProcessedResults(prev => ({...prev, ...newResults}));
+                        }
+                    } catch (e) {
+                        console.error('JSON 파싱 오류:', e);
+                    }
+                }
+            }
             
-            const completedProgress = {};
-            selectedImages.forEach(index => {
-                completedProgress[index] = { progress: 100, status: 'completed' };
-            });
-            setImageProgress(completedProgress);
-            
-            const newResults = {};
-            result.data.forEach((img, idx) => {
-                const index = selectedImages[idx];
-                newResults[index] = { url: img.url };
-            });
-            
-            setProcessedResults(prev => ({...prev, ...newResults}));
             selectedImages.forEach(() => incrementQuota('background'));
         } catch (error) {
-            console.error('Error:', error);
-            setError(error.message);
+            console.error('처리 중 오류:', error);
+            setError(error.message || '처리 중 오류가 발생했습니다.');
         } finally {
             setIsProcessing(false);
         }

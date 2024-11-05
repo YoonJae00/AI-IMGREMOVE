@@ -12,15 +12,19 @@ class ComfyUIManager {
         this.serverQueues = new Map(
             this.servers.map(server => [server, []])
         );
-        this.serverStatus = new Map();
-        this.currentServerIndex = 0;
+        this.serverStatus = new Map(
+            this.servers.map(server => [server, { healthy: true }])
+        );
+        this.currentBatchIndex = 0;
+        this.totalBatches = this.servers.length;
         this.workflows = {
             noBackground: require('../workflows/rmbg_noback_api.json'),
             withBackground: require('../workflows/rmbg_v3_api.json'),
             studio: require('../workflows/pro_v3_api.json')
         };
         
-        // 서버 상태 주기적 체크
+        // 서버 상태 즉시 체크 후 주기적으로 체크
+        this.checkServersHealth();
         setInterval(() => this.checkServersHealth(), 30000);
     }
 
@@ -39,7 +43,6 @@ class ComfyUIManager {
     }
 
     getNextServer() {
-        // 가장 적은 대기열을 가진 서버 선택
         const availableServers = this.servers.filter(server => 
             this.serverStatus.get(server)?.healthy
         );
@@ -48,48 +51,51 @@ class ComfyUIManager {
             throw new Error('사용 가능한 서버가 없습니다.');
         }
 
-        return availableServers.reduce((min, server) => {
-            const currentQueue = this.serverQueues.get(server).length;
-            const minQueue = this.serverQueues.get(min).length;
-            return currentQueue < minQueue ? server : min;
-        });
+        // 현재 배치에 해당하는 서버 선택
+        const selectedServer = availableServers[this.currentBatchIndex % availableServers.length];
+        
+        // 다음 배치로 이동
+        this.currentBatchIndex++;
+        
+        return selectedServer;
     }
 
-    async processImage(type, file, customBackground = null) {
+    async processImage(type, file, customBackground = null, progressCallback = null) {
         console.log('=== processImage 시작 ===');
         console.log('Type:', type);
-        console.log('Custom Background:', customBackground ? '있음' : '없음');
         
         const serverUrl = this.getNextServer();
-        console.log('선택된 서버:', serverUrl);
         this.serverQueues.get(serverUrl).push(file);
 
         try {
+            if (progressCallback) progressCallback(10);
             const uploadResult = await this.uploadImage(file, serverUrl);
-            console.log('원본 이미지 업로드 완료:', uploadResult.name);
             
+            if (progressCallback) progressCallback(30);
             let backgroundUploadResult = null;
             if (type === 'background' && customBackground) {
                 backgroundUploadResult = await this.uploadImage(customBackground, serverUrl);
-                console.log('배경 이미지 업로드 완료:', backgroundUploadResult.name);
             }
             
+            if (progressCallback) progressCallback(50);
             const workflow = this.getWorkflow(type);
-            console.log('선택된 워크플로우 타입:', type);
             const modifiedWorkflow = this.modifyWorkflow(workflow, {
                 inputImage: uploadResult.name,
                 backgroundImage: backgroundUploadResult?.name
             });
             
+            if (progressCallback) progressCallback(70);
             const promptResult = await this.executeWorkflow(modifiedWorkflow, serverUrl);
+            
+            if (progressCallback) progressCallback(90);
             const result = await this.waitForResult(promptResult.prompt_id, serverUrl);
             
+            if (progressCallback) progressCallback(100);
             return {
                 ...result,
-                serverUrl  // 결과에 서버 URL 포함
+                serverUrl
             };
         } finally {
-            // 작업 완료 후 대기열에서 제거
             const queue = this.serverQueues.get(serverUrl);
             const index = queue.indexOf(file);
             if (index > -1) queue.splice(index, 1);
@@ -131,25 +137,35 @@ class ComfyUIManager {
     }
 
     async waitForResult(promptId, serverUrl) {
-        const maxRetries = 20;
+        const maxRetries = 60;  // 최대 3분 대기
         let retryCount = 0;
 
         while (retryCount < maxRetries) {
             try {
                 const response = await axios.get(`${serverUrl}/history/${promptId}`);
                 const result = response.data;
+                console.log('comfyui port :', serverUrl);
+                // 실행 상태 확인
+                if (result?.[promptId]?.status?.status_str === 'error') {
+                    throw new Error('이미지 생성 실패');
+                }
                 
-                if (result?.[promptId]?.status?.status_str === 'success' && 
-                    result[promptId].outputs?.['72']?.images?.[0]) {
-                    
-                    const image = result[promptId].outputs['72'].images[0];
+                // 52번 노드(SaveImage)의 출력 확인
+                const outputs = result?.[promptId]?.outputs;
+                if (outputs?.['52']?.images?.[0]) {
+                    const image = outputs['52'].images[0];
                     return {
                         url: `${serverUrl}/view?filename=${image.filename}&type=${image.type}&subfolder=${image.subfolder || ''}`,
                         previewUrl: `${serverUrl}/view?filename=${image.filename}&type=${image.type}&subfolder=${image.subfolder || ''}&preview=true`
                     };
                 }
+
+                // 진행 상태 로깅
+                console.log('처리 상태:', result?.[promptId]?.status?.status_str);
+                console.log('52번 노드 상태:', outputs?.['52'] ? '있음' : '없음');
+                
             } catch (error) {
-                console.error('결과 조회 중 오류:', error);
+                console.error('결과 조회 중 오류:', error.message);
             }
             
             await new Promise(resolve => setTimeout(resolve, 3000));

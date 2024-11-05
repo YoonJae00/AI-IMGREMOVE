@@ -7,6 +7,7 @@ function StudioMode({ studioImage, quota, limits, checkQuota, incrementQuota }) 
     const [downloadUrl, setDownloadUrl] = useState(null);
     const [originalFileName, setOriginalFileName] = useState(null);
     const [error, setError] = useState(null);
+    const [progress, setProgress] = useState(0);
 
     useEffect(() => {
         return () => {
@@ -26,6 +27,7 @@ function StudioMode({ studioImage, quota, limits, checkQuota, incrementQuota }) 
         
         setIsProcessing(true);
         setError(null);
+        setProgress(0);
         
         try {
             const formData = new FormData();
@@ -36,19 +38,32 @@ function StudioMode({ studioImage, quota, limits, checkQuota, incrementQuota }) 
                 body: formData
             });
 
-            if (!response.ok) {
-                throw new Error('이미지 처리 실패');
-            }
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
 
-            const result = await response.json();
-            
-            if (result.success) {
-                setProcessedImage(result.data.url);
-                setDownloadUrl(result.data.url);
-                setOriginalFileName(studioImage.file.name);
-                incrementQuota('studio');
-            } else {
-                throw new Error(result.error);
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                const lines = decoder.decode(value).split('\n');
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    
+                    try {
+                        const result = JSON.parse(line);
+                        if (result.progress) {
+                            setProgress(result.progress);
+                        }
+                        if (result.success && result.data?.url) {
+                            setProcessedImage(result.data.url);
+                            setDownloadUrl(result.data.url);
+                            setOriginalFileName(studioImage.file.name);
+                            incrementQuota('studio');
+                        }
+                    } catch (e) {
+                        console.error('JSON 파싱 오류:', e);
+                    }
+                }
             }
         } catch (error) {
             console.error('처리 중 오류:', error);
@@ -139,6 +154,16 @@ function StudioMode({ studioImage, quota, limits, checkQuota, incrementQuota }) 
                     </div>
                 </div>
             </div>
+
+            {isProcessing && (
+                <div className="progress-bar-container">
+                    <div 
+                        className="progress-bar" 
+                        style={{ width: `${progress}%` }}
+                    />
+                    <span className="progress-text">{progress}%</span>
+                </div>
+            )}
         </div>
     );
 }

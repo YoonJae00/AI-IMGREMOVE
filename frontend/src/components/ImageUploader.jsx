@@ -73,17 +73,32 @@ function ImageUploader({ onProcess, quota, limits, checkQuota }) {
         body: formData
       });
 
-      if (!response.ok) {
-        throw new Error('이미지 처리 실패');
-      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
 
-      const result = await response.json();
-      
-      if (result.success) {
-        onProcess(result.data);
-        clearAllImages();
-      } else {
-        throw new Error(result.error);
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const events = decoder.decode(value).split('\n\n');
+        for (const event of events) {
+          if (!event.trim()) continue;
+          
+          const data = JSON.parse(event.replace('data: ', ''));
+          
+          switch (data.type) {
+            case 'progress':
+              onProcess([data.data.latest]);
+              break;
+              
+            case 'complete':
+              clearAllImages();
+              break;
+              
+            case 'error':
+              throw new Error(data.error);
+          }
+        }
       }
     } catch (error) {
       console.error('업로드 또는 처리 중 오류 발생:', error);
