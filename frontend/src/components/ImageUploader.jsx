@@ -62,6 +62,8 @@ function ImageUploader({ onProcess, quota, limits, checkQuota }) {
         formData.append('photos', file);
       });
 
+      formData.append('backgroundType', backgroundType);
+
       if (backgroundType === 'custom' && customBackground) {
         formData.append('background', customBackground);
       }
