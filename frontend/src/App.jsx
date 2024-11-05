@@ -69,6 +69,7 @@ function App() {
             });
 
             formData.append('backgroundType', backgroundType);
+
             if (backgroundType === 'custom' && customBackground) {
                 formData.append('background', customBackground);
             }
