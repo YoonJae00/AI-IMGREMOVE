@@ -1,8 +1,8 @@
 # ForSeller 이미지 가공 서비스
 
-<img src='https://github.com/user-attachments/assets/bf4549ea-b889-4963-84d2-b5d1ccb3f7e1'>
-
 <img src='https://github.com/user-attachments/assets/e180c7ad-f7af-4792-a45f-921b378c1922'>
+
+<img src='https://github.com/user-attachments/assets/d8f25428-a055-4096-9f73-1e4b33389f3d'>
 
 ## 프로젝트 개요
 
