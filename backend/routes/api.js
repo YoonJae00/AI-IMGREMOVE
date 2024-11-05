@@ -1,9 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const upload = multer({
+    limits: {
+        fileSize: 100 * 1024 * 1024  // 100MB
+    }
+});
 const ComfyUIManager = require('../services/ComfyUIManager');
 
-router.post('/remove-background', multer().fields([
+router.post('/remove-background', upload.fields([
     { name: 'photos', maxCount: 50 },
     { name: 'background', maxCount: 1 }
 ]), async (req, res) => {
@@ -32,7 +37,7 @@ router.post('/remove-background', multer().fields([
     }
 });
 
-router.post('/studio-process', multer().single('image'), async (req, res) => {
+router.post('/studio-process', upload.single('image'), async (req, res) => {
     try {
         const result = await ComfyUIManager.processImage('studio', req.file);
         res.json({

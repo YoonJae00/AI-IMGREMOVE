@@ -15,7 +15,7 @@ RUN npm run build
 # 개발 서버 실행
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
-EXPOSE 3000
+EXPOSE 5173
 
 ENV HOST=0.0.0.0
-ENV PORT=3000
+ENV PORT=5173
