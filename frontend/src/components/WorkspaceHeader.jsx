@@ -8,6 +8,7 @@ function WorkspaceHeader({
     selectedCount,
     onBulkProcess,
     onDownloadSelected,
+    onClearAll,
     isProcessing,
     onSelectAll,
     isAllSelected,
@@ -43,6 +44,14 @@ function WorkspaceHeader({
             </div>
             
             <div className="workspace-actions">
+                <button 
+                    className="action-button danger"
+                    onClick={onClearAll}
+                    disabled={totalImages === 0 || isProcessing}
+                >
+                    <span className="action-icon">🗑️</span>
+                    전체 삭제
+                </button>
                 <button 
                     className="action-button" 
                     disabled={selectedCount === 0 || isProcessing}

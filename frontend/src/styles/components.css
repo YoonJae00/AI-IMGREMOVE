@@ -1090,3 +1090,21 @@
   border-color: #007AFF;
   box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3);
 }
+
+.action-button.danger {
+    background-color: #fff;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+}
+
+.action-button.danger:hover:not(:disabled) {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+.action-button.danger:disabled {
+    background-color: #fff;
+    color: #6c757d;
+    border-color: #6c757d;
+    cursor: not-allowed;
+}
