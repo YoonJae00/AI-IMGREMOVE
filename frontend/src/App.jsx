@@ -196,6 +196,22 @@ function App() {
         setProcessedResults(adjustedResults);
     };
 
+    const handleClearAll = () => {
+        if (window.confirm('모든 이미지를 삭제하시겠습니까?')) {
+            // 기존 미리보기 URL 정리
+            previews.forEach(preview => {
+                URL.revokeObjectURL(preview.preview);
+            });
+            
+            setPreviews([]);
+            setFiles([]);
+            setSelectedImages([]);
+            setProcessedResults({});
+            setImageProgress({});
+            setCustomBackground(null);
+        }
+    };
+
     return (
         <>
             {showLanding ? (
@@ -259,14 +275,16 @@ function App() {
                                     <>
                                         <WorkspaceHeader 
                                             totalImages={previews.length}
-                                            processedImages={selectedImages.length}
+                                            processedImages={Object.keys(processedResults).length}
                                             estimatedTime={estimatedTime}
                                             selectedCount={selectedImages.length}
                                             onBulkProcess={handleBulkProcess}
                                             onDownloadSelected={handleDownloadSelected}
+                                            onClearAll={handleClearAll}
                                             isProcessing={isProcessing}
                                             onSelectAll={handleSelectAll}
                                             isAllSelected={selectedImages.length === previews.length}
+                                            remainingQuota={limits.background - quota.background}
                                         />
                                         <ImageGrid 
                                             previews={previews}
