@@ -121,24 +121,22 @@
 }
 
 .usage-grid {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 4rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  padding: 0 2rem;
 }
 
 .usage-item {
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  counter-reset: step;
 }
 
 .usage-video {
   width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
   border-radius: 1rem;
   overflow: hidden;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
@@ -292,6 +290,11 @@
   
   .demo-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .usage-grid {
+    grid-template-columns: 1fr;
+    max-width: 800px;
   }
 }
 

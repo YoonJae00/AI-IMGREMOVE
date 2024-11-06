@@ -25,37 +25,6 @@ function LandingPage({ onGetStarted }) {
         </div>
       </section>
 
-      <section className="features-section">
-        <h2>주요 기능</h2>
-        <div className="features-grid">
-          <div className="feature-card">
-            <div className="feature-icon">🎯</div>
-            <h3>대량 배경 제거</h3>
-            <p>최대 50장의 이미지를 한 번에 처리<br />투명 배경 또는 새로운 배경으로 변경</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">📸</div>
-            <h3>스튜디오 모드</h3>
-            <p>전문 스튜디오에서 촬영한 것 같은<br />고품질 이미지로 변환</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">🖼️</div>
-            <h3>대표이미지 가공</h3>
-            <p>상품 대표이미지에 최적화된<br />1024x1024 정사각형 리사이즈</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">⚡</div>
-            <h3>빠른 처리 속도</h3>
-            <p>AI 기술로 빠르고 정확하게<br />이미지 처리 완료</p>
-          </div>
-          <div className="feature-card">
-            <div className="feature-icon">💾</div>
-            <h3>간편한 다운로드</h3>
-            <p>처리된 이미지를 ZIP 파일로<br />한 번에 다운로드</p>
-          </div>
-        </div>
-      </section>
-
       <section className="usage-section">
         <h2>이렇게 사용하세요</h2>
         <div className="usage-grid">
@@ -125,6 +94,37 @@ function LandingPage({ onGetStarted }) {
               </div>
             </div>
             <p>스튜디오 모드로 전문적인 느낌 연출</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="features-section">
+        <h2>주요 기능</h2>
+        <div className="features-grid">
+          <div className="feature-card">
+            <div className="feature-icon">🎯</div>
+            <h3>대량 배경 제거</h3>
+            <p>최대 50장의 이미지를 한 번에 처리<br />투명 배경 또는 새로운 배경으로 변경</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">📸</div>
+            <h3>스튜디오 모드</h3>
+            <p>전문 스튜디오에서 촬영한 것 같은<br />고품질 이미지로 변환</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">🖼️</div>
+            <h3>대표이미지 가공</h3>
+            <p>상품 대표이미지에 최적화된<br />1024x1024 정사각형 리사이즈</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">⚡</div>
+            <h3>빠른 처리 속도</h3>
+            <p>AI 기술로 빠르고 정확하게<br />이미지 처리 완료</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">💾</div>
+            <h3>간편한 다운로드</h3>
+            <p>처리된 이미지를 ZIP 파일로<br />한 번에 다운로드</p>
           </div>
         </div>
       </section>
