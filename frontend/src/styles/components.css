@@ -197,31 +197,193 @@
 
 /* Process Options */
 .process-options {
-  background: white;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--gray-200);
-  padding: var(--spacing-4);
-  margin-top: var(--spacing-4);
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.option-group {
-  margin-bottom: var(--spacing-4);
+.background-options {
+  margin: 15px 0;
+  display: flex;
+  gap: 20px;
 }
 
-.option-group:last-child {
-  margin-bottom: 0;
+.background-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
 }
 
-.option-label {
-  font-size: var(--text-sm);
-  color: var(--gray-700);
-  margin-bottom: var(--spacing-2);
+.background-options input[type="radio"] {
+  margin: 0;
 }
 
-.option-buttons {
+.background-selector {
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.sample-backgrounds h4,
+.custom-upload h4 {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.sample-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-2);
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+  max-width: 500px;
+}
+
+.sample-item {
+  aspect-ratio: 1;
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.sample-item.selected {
+  border-color: #007AFF;
+}
+
+.sample-item:hover:not(.selected) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.sample-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sample-item span {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  font-size: 14px;
+}
+
+.check-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  background: #007AFF;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.upload-item {
+  border: 2px dashed #ddd;
+  background: #f8f8f8;
+  transition: all 0.2s ease;
+}
+
+.upload-item:hover {
+  border-color: #007AFF;
+  background: rgba(0, 122, 255, 0.05);
+}
+
+.upload-preview {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.upload-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.upload-preview span {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  font-size: 14px;
+  border-top: 1px solid #eee;
+}
+
+.upload-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  gap: 8px;
+}
+
+.upload-icon {
+  font-size: 24px;
+  color: #007AFF;
+}
+
+.custom-upload {
+  margin-top: 24px;
+  padding: 20px;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.custom-upload:hover {
+  border-color: #007AFF;
+  background: rgba(0, 122, 255, 0.05);
+}
+
+.custom-upload input[type="file"] {
+  display: none;
+}
+
+.custom-upload label {
+  display: block;
+  cursor: pointer;
+  padding: 20px;
+}
+
+.custom-upload .upload-icon {
+  font-size: 24px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.custom-upload .upload-text {
+  font-size: 14px;
+  color: #666;
+}
+
+.custom-upload.has-file {
+  border-style: solid;
+  border-color: #007AFF;
+}
+
+.custom-upload.has-file .upload-text {
+  color: #007AFF;
 }
 
 /* Workspace Footer */
@@ -895,4 +1057,36 @@
 
 .main-content {
     padding-bottom: 2rem;
+}
+
+.upload-preview {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.upload-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.upload-preview .check-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  background: #007AFF;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.upload-item.selected {
+  border-color: #007AFF;
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3);
 }
