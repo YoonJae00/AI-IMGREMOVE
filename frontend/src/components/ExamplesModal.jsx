@@ -9,11 +9,11 @@ function ExamplesModal({ onClose }) {
         
         <div className="example-tabs">
           <div className="example-section">
-            <h3>배경제거 모드</h3>
+            <h3>대량가공 셀러 모드</h3>
             <div className="example-features">
               <div className="feature">
                 <span className="feature-badge">최대 50장</span>
-                <span className="feature-desc">한 번에 최대 50장까지 처리</span>
+                <span className="feature-desc">배경 제거 & 사용자가 원하는 배경 추가</span>
               </div>
               <div className="feature">
                 <span className="feature-badge">배경 선택</span>
