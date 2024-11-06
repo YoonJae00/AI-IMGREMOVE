@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const StatsManager = require('../services/statsManager')
+
 
 const upload = multer({
     limits: {
@@ -20,6 +22,7 @@ const ComfyUIManager = require('../services/ComfyUIManager');
 router.post('/remove-background', uploadFields, async (req, res) => {
     try {
         const files = req.files.photos;
+        StatsManager.incrementBackgroundRemoval(files.length);
         let backgroundType = req.body.backgroundType || 'transparent';
         const customBackground = req.files.background?.[0];
         
@@ -69,6 +72,7 @@ router.post('/remove-background', uploadFields, async (req, res) => {
 
 router.post('/studio-process', uploadSingle, async (req, res) => {
     try {
+        StatsManager.incrementStudio();
         // SSE 헤더 설정
         res.setHeader('Content-Type', 'text/plain');
         res.setHeader('Cache-Control', 'no-cache');
