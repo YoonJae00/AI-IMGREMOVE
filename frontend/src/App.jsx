@@ -57,6 +57,13 @@ function App() {
         }
 
         try {
+            // GA 이벤트 전송
+            gtag('event', 'process_images', {
+                'event_category': 'background_removal',
+                'event_label': 'bulk_process',
+                'value': selectedImages.length
+            });
+
             setIsProcessing(true);
             setError(null);
             

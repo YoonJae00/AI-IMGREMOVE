@@ -30,6 +30,13 @@ function StudioMode({ studioImage, quota, limits, checkQuota, incrementQuota }) 
         setProgress(0);
         
         try {
+
+                        // GA 이벤트 전송
+            gtag('event', 'process_images', {
+                'event_category': 'studio',
+                'event_label': 'single_process',
+                'value': 1
+            });
             const formData = new FormData();
             formData.append('image', studioImage.file);
 
