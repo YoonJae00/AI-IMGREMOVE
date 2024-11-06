@@ -9,7 +9,7 @@ function ExamplesModal({ onClose }) {
         
         <div className="example-tabs">
           <div className="example-section">
-            <h3>배경제거 모드</h3>
+            <h3>대량 가공 모드</h3>
             <div className="example-features">
               <div className="feature">
                 <span className="feature-badge">최대 50장</span>

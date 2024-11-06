@@ -9,9 +9,11 @@ import StudioMode from './components/StudioMode';
 import Footer from './components/Footer';
 import './styles/design-system.css';
 import './styles/components.css';
+import './styles/landing-page.css';
 import axios from 'axios';
 import JSZip from 'jszip';
 import { useQuota } from './hooks/useQuota';
+import LandingPage from './components/LandingPage';
 
 function App() {
     const { quota, incrementQuota, checkQuota, limits } = useQuota();
@@ -26,6 +28,7 @@ function App() {
     const [studioImage, setStudioImage] = useState(null);
     const [error, setError] = useState(null);
     const [imageProgress, setImageProgress] = useState({});
+    const [showLanding, setShowLanding] = useState(true);
 
     const handleFileDrop = useCallback((acceptedFiles) => {
         if (activeTab === 'studio') {
@@ -194,106 +197,112 @@ function App() {
     };
 
     return (
-        <div className="app-container">
-            <div className="app-content">
-                <header className="header">
-                    <div className="header-content">
-                        <div className="logo">
-                            <h1>For Seller</h1>
-                        </div>
-                        <div className="header-actions">
-                            <div className="quota-container">
-                                <div className="quota-item">
-                                    <span className="quota-icon">🎯</span>
-                                    <div className="quota-text">
-                                        <span className="quota-label">배경제거</span>
-                                        <span className="quota-value">{quota.background}/{limits.BACKGROUND}</span>
-                                    </div>
+        <>
+            {showLanding ? (
+                <LandingPage onGetStarted={() => setShowLanding(false)} />
+            ) : (
+                <div className="app-container">
+                    <div className="app-content">
+                        <header className="header">
+                            <div className="header-content">
+                                <div className="logo">
+                                    <h1>For Seller</h1>
                                 </div>
-                                <div className="quota-item">
-                                    <span className="quota-icon">✨</span>
-                                    <div className="quota-text">
-                                        <span className="quota-label">스튜디오</span>
-                                        <span className="quota-value">{quota.studio}/{limits.STUDIO}</span>
+                                <div className="header-actions">
+                                    <div className="quota-container">
+                                        <div className="quota-item">
+                                            <span className="quota-icon">🎯</span>
+                                            <div className="quota-text">
+                                                <span className="quota-label">대량가공</span>
+                                                <span className="quota-value">{quota.background}/{limits.BACKGROUND}</span>
+                                            </div>
+                                        </div>
+                                        <div className="quota-item">
+                                            <span className="quota-icon">✨</span>
+                                            <div className="quota-text">
+                                                <span className="quota-label">스튜디오</span>
+                                                <span className="quota-value">{quota.studio}/{limits.STUDIO}</span>
+                                            </div>
+                                        </div>
                                     </div>
+                                    <button className="help-button">도움말</button>
                                 </div>
                             </div>
-                            <button className="help-button">도움말</button>
-                        </div>
-                    </div>
-                </header>
-                <main className="main-content">
-                    <aside className="sidebar">
-                        <ModeSwitcher 
-                            activeMode={activeTab} 
-                            onModeChange={(mode) => {
-                                setActiveTab(mode);
-                                setPreviews([]);
-                                setFiles([]);
-                                setStudioImage(null);
-                            }} 
-                        />
-                        <UploadSection 
-                            onDrop={handleFileDrop}
-                            mode={activeTab}
-                        />
-                        {activeTab === 'removeBackground' && 
-                            <ProcessOptions 
-                                backgroundType={backgroundType}
-                                setBackgroundType={setBackgroundType}
-                                customBackground={customBackground}
-                                setCustomBackground={setCustomBackground}
-                            />
-                        }
-                    </aside>
+                        </header>
+                        <main className="main-content">
+                            <aside className="sidebar">
+                                <ModeSwitcher 
+                                    activeMode={activeTab} 
+                                    onModeChange={(mode) => {
+                                        setActiveTab(mode);
+                                        setPreviews([]);
+                                        setFiles([]);
+                                        setStudioImage(null);
+                                    }} 
+                                />
+                                <UploadSection 
+                                    onDrop={handleFileDrop}
+                                    mode={activeTab}
+                                />
+                                {activeTab === 'removeBackground' && 
+                                    <ProcessOptions 
+                                        backgroundType={backgroundType}
+                                        setBackgroundType={setBackgroundType}
+                                        customBackground={customBackground}
+                                        setCustomBackground={setCustomBackground}
+                                    />
+                                }
+                            </aside>
 
-                    <section className="workspace">
-                        {activeTab === 'removeBackground' ? (
-                            <>
-                                <WorkspaceHeader 
-                                    totalImages={previews.length}
-                                    processedImages={selectedImages.length}
-                                    estimatedTime={estimatedTime}
-                                    selectedCount={selectedImages.length}
-                                    onBulkProcess={handleBulkProcess}
-                                    onDownloadSelected={handleDownloadSelected}
-                                    isProcessing={isProcessing}
-                                    onSelectAll={handleSelectAll}
-                                    isAllSelected={selectedImages.length === previews.length}
-                                />
-                                <ImageGrid 
-                                    previews={previews}
-                                    onRemove={removeImage}
-                                    selectedImages={selectedImages}
-                                    onSelect={handleImageSelect}
-                                    processedResults={processedResults}
-                                    imageProgress={imageProgress}
-                                    isProcessing={isProcessing}
-                                />
-                                <WorkspaceFooter 
-                                    estimatedTime={estimatedTime}
-                                    remainingQuota={quota.background}
-                                    totalQuota={limits.BACKGROUND}
-                                    onBulkProcess={handleBulkProcess}
-                                    onDownloadAll={handleDownloadSelected}
-                                    isProcessing={isProcessing}
-                                    totalImages={previews.length}
-                                />
-                            </>
-                        ) : (
-                            <StudioMode 
-                                studioImage={studioImage} 
-                                quota={quota}
-                                limits={limits}
-                                checkQuota={checkQuota}
-                                incrementQuota={incrementQuota}
-                            />
-                        )}
-                    </section>
-                </main>
-            </div>
-            <Footer />
-        </div>
+                            <section className="workspace">
+                                {activeTab === 'removeBackground' ? (
+                                    <>
+                                        <WorkspaceHeader 
+                                            totalImages={previews.length}
+                                            processedImages={selectedImages.length}
+                                            estimatedTime={estimatedTime}
+                                            selectedCount={selectedImages.length}
+                                            onBulkProcess={handleBulkProcess}
+                                            onDownloadSelected={handleDownloadSelected}
+                                            isProcessing={isProcessing}
+                                            onSelectAll={handleSelectAll}
+                                            isAllSelected={selectedImages.length === previews.length}
+                                        />
+                                        <ImageGrid 
+                                            previews={previews}
+                                            onRemove={removeImage}
+                                            selectedImages={selectedImages}
+                                            onSelect={handleImageSelect}
+                                            processedResults={processedResults}
+                                            imageProgress={imageProgress}
+                                            isProcessing={isProcessing}
+                                        />
+                                        <WorkspaceFooter 
+                                            estimatedTime={estimatedTime}
+                                            remainingQuota={quota.background}
+                                            totalQuota={limits.BACKGROUND}
+                                            onBulkProcess={handleBulkProcess}
+                                            onDownloadAll={handleDownloadSelected}
+                                            isProcessing={isProcessing}
+                                            totalImages={previews.length}
+                                        />
+                                    </>
+                                ) : (
+                                    <StudioMode 
+                                        studioImage={studioImage} 
+                                        quota={quota}
+                                        limits={limits}
+                                        checkQuota={checkQuota}
+                                        incrementQuota={incrementQuota}
+                                    />
+                                )}
+                            </section>
+                        </main>
+                    </div>
+                    <Footer />
+                </div>
+            )}
+        </>
     );
 }
 
