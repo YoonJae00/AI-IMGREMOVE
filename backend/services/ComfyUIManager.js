@@ -4,11 +4,21 @@ const FormData = require('form-data');
 class ComfyUIManager {
     constructor() {
         this.servers = [
-            'http://221.148.97.237:8188',
-            'http://221.148.97.237:8189',
-            'http://221.148.97.237:8190',
-            'http://221.148.97.237:8191'
+            'http://192.168.0.138:8188',
+            'http://192.168.0.172:8189',
+            'http://192.168.0.185:8190',
+            'http://192.168.0.119:8191'
         ];
+        
+        // 외부 IP 매핑 추가
+        this.publicIP = 'http://221.148.97.237';
+        this.portMap = {
+            'http://192.168.0.138:8188': ':8188',
+            'http://192.168.0.172:8189': ':8189',
+            'http://192.168.0.185:8190': ':8190',
+            'http://192.168.0.119:8191': ':8191'
+        };
+        
         this.serverQueues = new Map(
             this.servers.map(server => [server, []])
         );
@@ -61,6 +71,7 @@ class ComfyUIManager {
     }
 
     async processImage(type, file, customBackground = null, progressCallback = null) {
+        this.currentWorkflowType = type;
         console.log('=== processImage 시작 ===');
         console.log('Type:', type);
         
@@ -136,43 +147,70 @@ class ComfyUIManager {
         return response.data;
     }
 
+    // 내부 IP를 외부 IP로 변환하는 헬퍼 메소드
+    convertToPublicUrl(internalUrl) {
+        for (const server of this.servers) {
+            if (internalUrl.includes(server)) {
+                const port = this.portMap[server];
+                return internalUrl.replace(server, this.publicIP + port);
+            }
+        }
+        return internalUrl;
+    }
+
     async waitForResult(promptId, serverUrl) {
-        const maxRetries = 60;  // 최대 3분 대기
+        const maxRetries = 60;
         let retryCount = 0;
+        const workflowType = this.getCurrentWorkflowType();
 
         while (retryCount < maxRetries) {
             try {
-                const response = await axios.get(`${serverUrl}/history/${promptId}`);
-                const result = response.data;
+                const result = await axios.get(`${serverUrl}/history/${promptId}`);
                 console.log('comfyui port :', serverUrl);
-                // 실행 상태 확인
-                if (result?.[promptId]?.status?.status_str === 'error') {
-                    throw new Error('이미지 생성 실패');
-                }
+                console.log('처리 상태:', result.data[promptId]?.status?.status_str);
                 
-                // 52번 노드(SaveImage)의 출력 확인
-                const outputs = result?.[promptId]?.outputs;
-                if (outputs?.['52']?.images?.[0]) {
-                    const image = outputs['52'].images[0];
+                const outputs = result.data[promptId]?.outputs;
+                
+                // 워크플로우 타입에 따라 다른 노드 번호 확인
+                const nodeNumber = workflowType === 'studio' ? '52' : '72';
+                console.log(`${nodeNumber}번 노드 상태:`, outputs?.[nodeNumber] ? '있음' : '없음');
+                
+                if (outputs?.[nodeNumber]?.images?.[0]) {
+                    const image = outputs[nodeNumber].images[0];
+                    const filename = encodeURIComponent(image.filename);
+                    const subfolder = image.subfolder ? encodeURIComponent(image.subfolder) : '';
+                    
+                    const internalUrl = `${serverUrl}/view?filename=${filename}&type=${image.type}${subfolder ? `&subfolder=${subfolder}` : ''}`;
+                    const publicUrl = this.convertToPublicUrl(internalUrl);
+                    
+                    console.log('Internal URL:', internalUrl);
+                    console.log('Public URL:', publicUrl);
+                    
                     return {
-                        url: `${serverUrl}/view?filename=${image.filename}&type=${image.type}&subfolder=${image.subfolder || ''}`,
-                        previewUrl: `${serverUrl}/view?filename=${image.filename}&type=${image.type}&subfolder=${image.subfolder || ''}&preview=true`
+                        url: publicUrl,
+                        previewUrl: `${publicUrl}&preview=true`,
+                        status: 'success'
                     };
                 }
 
-                // 진행 상태 로깅
-                console.log('처리 상태:', result?.[promptId]?.status?.status_str);
-                console.log('52번 노드 상태:', outputs?.['52'] ? '있음' : '없음');
+                if (result.data[promptId]?.status?.status_str === 'error') {
+                    throw new Error('ComfyUI 처리 오류');
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                retryCount++;
                 
             } catch (error) {
                 console.error('결과 조회 중 오류:', error.message);
+                if (retryCount >= maxRetries - 1) {
+                    throw new Error('이미지 처리 시간 초과');
+                }
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                retryCount++;
             }
-            
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            retryCount++;
         }
         
-        throw new Error('이미지 생성 시간 초과');
+        throw new Error('이미지 처리 시간 초과');
     }
 
     getWorkflow(type) {
