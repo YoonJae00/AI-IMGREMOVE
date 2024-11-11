@@ -1,4 +1,4 @@
-# ForSeller 이미지 가공 서비스
+# ForSeller - AI 기반 이미지 가공 서비스
 
 <img src='https://github.com/user-attachments/assets/e180c7ad-f7af-4792-a45f-921b378c1922'>
 
@@ -6,233 +6,122 @@
 
 ## 프로젝트 개요
 
-ForSeller는 대량가공 쇼핑몰 셀러 들을 위한 이미지 가공 서비스입니다. 이 서비스는 사용자가 업로드한 이미지의 배경을 자동으로 제거하고, 처리된 이미지를 다운로드할 수 있게 해줍니다.
+ForSeller는 쇼핑몰 셀러를 위한 AI 기반 이미지 가공 서비스입니다. 대량의 상품 이미지를 한 번에 처리할 수 있으며, 배경 제거, 스튜디오 모드 변환 등 다양한 기능을 제공합니다.
+
+### 주요 특징
+- 최대 50장 이미지 동시 처리
+- AI 기반 정교한 배경 제거
+- 스튜디오 촬영 효과 적용
+- 실시간 처리 상태 모니터링
+- 로드 밸런싱을 통한 빠른 처리 속도
+
+## 시스템 아키텍처
+
+### 전체 구성도
+```mermaid
+graph TB
+    subgraph "클라이언트"
+        FE[프론트엔드<br/>React + Vite]
+        FE --> |API 요청| NG[Nginx Proxy]
+    end
+
+    subgraph "서버"
+        NG --> |프록시| BE[백엔드<br/>Node.js + Express]
+        BE --> |이미지 처리| CM[ComfyUI Manager]
+    end
+
+    subgraph "ComfyUI 클러스터"
+        CM --> |로드밸런싱| C1[ComfyUI Server 1]
+        CM --> |로드밸런싱| C2[ComfyUI Server 2]
+        CM --> |로드밸런싱| C3[ComfyUI Server 3]
+        CM --> |로드밸런싱| C4[ComfyUI Server 4]
+    end
+```
 
 ## 기술 스택
 
 ### 프론트엔드
-- React
+- React 18
 - Vite
+- React-dropzone
 - Axios
-- react-dropzone
+- JSZip
 
 ### 백엔드
 - Node.js
 - Express
-- Multer
-- Archiver
-- express-rate-limit
+- Multer (파일 업로드)
+- Express-rate-limit (요청 제한)
+- Docker & Docker Compose
+
+### 인프라
+- Nginx (리버스 프록시)
+- ComfyUI (AI 이미지 처리)
+- Docker Container
 
 ## 주요 기능
 
-1. 이미지 업로드 (최대 10개)
-2. 배경 제거 처리
-3. 처리된 이미지 다운로드
-4. IP 기반 일일 요청 제한 (기본 10회)
-5. 무제한 IP 관리
-6. 사용 통계 대시보드
+### 1. 대량 이미지 처리
+- 최대 50장 동시 업로드
+- 드래그 앤 드롭 지원
+- 실시간 처리 상태 표시
+- 일괄 다운로드
 
-## 설치 및 실행 방법
+### 2. AI 배경 제거
+- 투명 배경 변환
+- 커스텀 배경 적용
+- 정교한 경계선 처리
 
-### 프론트엔드
+### 3. 스튜디오 모드
+- 전문 스튜디오 촬영 효과
+- 조명 및 그림자 최적화
+- 상품 이미지 품질 개선
 
-1. 프로젝트 클론
-   ```
-   git clone <repository-url>
-   cd <project-folder>/front
-   ```
+### 4. 시스템 관리
+- IP 기반 요청 제한
+- 로드 밸런싱
+- 실시간 서버 상태 모니터링
 
-2. 의존성 설치
-   ```
-   npm install
-   ```
+## 시스템 특징
 
-3. 개발 서버 실행
-   ```
-   npm run dev
-   ```
+### 확장성
+- Docker 기반 마이크로서비스 아키텍처
+- 수평적 확장 가능한 ComfyUI 클러스터
+- 로드 밸런싱을 통한 부하 분산
 
-4. 빌드
-   ```
-   npm run build
-   ```
+### 안정성
+- 서버 헬스 체크
+- 자동 페일오버
+- 에러 핸들링 및 복구
 
-### 백엔드
+### 성능
+- 이미지 병렬 처리
+- 연결 유지(Keep-Alive)
+- 캐시 최적화
 
-1. 프로젝트 폴더로 이동
-   ```
-   cd <project-folder>/backend
-   ```
+## 설치 및 실행
 
-2. 의존성 설치
-   ```
-   npm install
-   ```
-
-3. 서버 실행
-   ```
-   node server.js
-   ```
-
-## 프론트엔드 구조
-
-```
-front/
-├── src/
-│   ├── components/
-│   │   ├── ImageUploader.jsx
-│   │   ├── DownloadButton.jsx
-│   │   └── Footer.jsx
-│   ├── styles/
-│   │   ├── App.css
-│   │   └── ImageUploader.css
-│   ├── App.jsx
-│   └── main.jsx
-├── public/
-│   └── forseller-icon.svg
-├── index.html
-├── package.json
-└── vite.config.js
+1. 저장소 클론
+```bash
+git clone <repository-url>
+cd forseller
 ```
 
-### 주요 컴포넌트
-
-1. ImageUploader: 이미지 업로드 및 처리 담당
-   
-```6:40:front/src/components/ImageUploader.jsx
-function ImageUploader() {
-  const [previews, setPreviews] = useState([]);
-  const [files, setFiles] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [estimatedTime, setEstimatedTime] = useState(0);
-  const [remainingTime, setRemainingTime] = useState(0);
-
-  const onDrop = useCallback(async (acceptedFiles) => {
-    if (previews.length + acceptedFiles.length > 10) {
-      alert('최대 10개의 이미지만 업로드할 수 있습니다.');
-      acceptedFiles = acceptedFiles.slice(0, 10 - previews.length);
-    }
-
-    const newPreviews = [...previews, ...acceptedFiles.map(file => ({
-      file,
-      preview: URL.createObjectURL(file)
-    }))];
-    setPreviews(newPreviews);
-    setFiles(newPreviews.map(preview => preview.file));
-  }, [previews]);
-
-  const removeImage = (index) => {
-    const newPreviews = [...previews];
-    newPreviews.splice(index, 1);
-    setPreviews(newPreviews);
-    setFiles(newPreviews.map(preview => preview.file));
-  };
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
-    onDrop,
-    accept: 'image/*',
-    multiple: true
-  });
-
-  const uploadAndDownload = async () => {
+2. 환경 변수 설정
+```bash
+# .env 파일 생성
+cp .env.example .env
 ```
 
-
-2. DownloadButton: 처리된 이미지 다운로드 기능 제공
-
-3. Footer: 페이지 하단 정보 표시
-
-## 백엔드 구조
-
+3. Docker Compose 실행
+```bash
+docker-compose up -d
 ```
-backend/
-├── server.js
-├── public/
-│   └── stats.html
-└── package.json
-```
-
-### 주요 기능
-
-1. 이미지 업로드 및 처리
-2. 요청 제한 관리
-3. 무제한 IP 관리
-4. 통계 데이터 제공
-
-
-```36:46:backend/server.js
-// Rate limiter 설정
-const limiter = rateLimit({
-  windowMs: 24 * 60 * 60 * 1000, // 24 시간
-  max: (req) => {
-    const clientIp = getClientIp(req);
-    return unlimitedIPs.includes(clientIp) ? 1000000 : 10; // 무제한 IP는 높은 제한, 그 외는 10회
-  },
-  message: '일일 요청 한도를 초과했습니다. 내일 다시 시도해 주세요.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-```
-
-
-## 환경 변수
-
-프론트엔드와 백엔드 모두 `.env` 파일을 사용하여 환경 변수를 관리합니다. 예시:
-
-```
-VITE_API_URL=http://localhost:3101
-PORT=3101
-```
-
-## 배포
-
-- 프론트엔드: Vercel 또는 Netlify를 통한 정적 사이트 배포
-- 백엔드: AWS EC2 또는 Heroku를 통한 서버 배포
-
-## 통계 대시보드
-
-`/dashboard` 엔드포인트에서 사용 통계를 확인할 수 있습니다.
-
-
-```58:80:backend/public/stats.html
-    <div class="container">
-        <h1>ForSeller 통계 대시보드</h1>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h2 id="totalAccesses">-</h2>
-                <p>총 접속 수</p>
-            </div>
-            <div class="stat-card">
-                <h2 id="uniqueVisitors">-</h2>
-                <p>고유 방문자 수</p>
-            </div>
-            <div class="stat-card">
-                <h2 id="mostActiveHour">-</h2>
-                <p>가장 활발한 시간대</p>
-            </div>
-            <div class="stat-card">
-                <h2 id="averageDailyAccesses">-</h2>
-                <p>일일 평균 접속 수</p>
-            </div>
-            <div class="stat-card">
-                <h2 id="mostActiveIP">-</h2>
-                <p>가장 활발한 IP (접속 횟수)</p>
-              </div>
-```
-
 
 ## 라이선스
 
-이 프로젝트는 MIT 라이선스 하에 있습니다.
-
-## 기여
-
-버그 리포트, 기능 제안, 풀 리퀘스트 등 모든 형태의 기여를 환영합니다.
+이 프로젝트는 MIT 라이선스를 따릅니다.
 
 ## 연락처
 
-프로젝트 관리자: realyoon77@gmail.com
-
-## 개선사항
-<img src='https://github.com/user-attachments/assets/35f03666-c3fa-4d99-9a9e-1e87f55aa3a2'>
-
+개발자: realyoon77@gmail.com
