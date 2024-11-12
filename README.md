@@ -1,6 +1,7 @@
 # ForSeller - AI 기반 이미지 가공 서비스
 
-<img src='https://github.com/user-attachments/assets/e180c7ad-f7af-4792-a45f-921b378c1922'>
+![프로그래스](https://github.com/user-attachments/assets/8462d933-a974-4e74-a0a2-a8459925b658)
+
 
 <img src='https://github.com/user-attachments/assets/eca52747-39b6-4336-ab17-0a2096a83cd2'>
 
