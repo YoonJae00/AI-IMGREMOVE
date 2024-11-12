@@ -2,7 +2,7 @@
 
 <img src='https://github.com/user-attachments/assets/e180c7ad-f7af-4792-a45f-921b378c1922'>
 
-<img src='https://github.com/user-attachments/assets/d8f25428-a055-4096-9f73-1e4b33389f3d'>
+<img src='https://github.com/user-attachments/assets/eca52747-39b6-4336-ab17-0a2096a83cd2'>
 
 ## 프로젝트 개요
 
