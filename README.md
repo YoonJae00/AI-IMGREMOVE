@@ -183,10 +183,6 @@ cp .env.example .env
 docker-compose up -d
 ```
 
-## 라이선스
-
-이 프로젝트는 MIT 라이선스를 따릅니다.
-
 ## 연락처
 
 개발자: realyoon77@gmail.com
