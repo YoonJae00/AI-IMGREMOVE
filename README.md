@@ -1,4 +1,4 @@
-# ForSeller - AI 기반 이미지 가공 서비스
+# ForSeller - AI 기반 이미지 가공 서비스 (운영 종료)
 
 ![프로그래스](https://github.com/user-attachments/assets/8462d933-a974-4e74-a0a2-a8459925b658)
 
